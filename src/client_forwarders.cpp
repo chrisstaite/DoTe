@@ -3,9 +3,39 @@
 #include "forwarder_connection.h"
 
 #include <sys/socket.h>
+#include <arpa/inet.h>
+
 #include <functional>
+#include <cstring>
 
 namespace dote {
+
+namespace {
+
+/// \brief  Compare two client addresses for equality
+///
+/// \param client1  The first address
+/// \param client2  The second address
+///
+/// \return  True if the addresses are the same
+bool isClient(const sockaddr_storage& client1, const sockaddr_storage& client2)
+{
+    if (client1.ss_family != client2.ss_family)
+    {
+        return false;
+    }
+    switch (client1.ss_family)
+    {
+        case AF_INET:
+            return memcmp(&client1, &client2, sizeof(sockaddr_in)) == 0;
+        case AF_INET6:
+            return memcmp(&client1, &client2, sizeof(sockaddr_in6)) == 0;
+        default:
+            return memcmp(&client1, &client2, sizeof(sockaddr_storage)) == 0;
+    }
+}
+
+}  // anon namespace
 
 using namespace std::placeholders;
 
@@ -31,8 +61,7 @@ std::shared_ptr<ForwarderConnection> ClientForwarders::forwarder(
     auto connectionIt = m_connections.begin();
     while (clientIt != m_clients.end())
     {
-        if (clientIt->ss_len == client.ss_len &&
-                memcmp(&clientIt->ss_family, &client.ss_family, client.ss_len) == 0)
+        if (isClient(*clientIt, client))
         {
             if ((*connectionIt)->closed())
             {
@@ -131,8 +160,17 @@ void ClientForwarders::handleIncoming(int handle,
     struct iovec iov[1] {
         { &buffer.data()[2], length }
     };
+    socklen_t clientLength = 0;
+    if (client.ss_family == AF_INET)
+    {
+        clientLength = sizeof(sockaddr_in);
+    }
+    else if (client.ss_family == AF_INET6)
+    {
+        clientLength = sizeof(sockaddr_in6);
+    }
     struct msghdr message {
-        &client, client.ss_len, iov, 1, 0, 0
+        &client, clientLength, iov, 1, 0, 0
     };
     if (sendmsg(handle, &message, 0) == -1)
     {

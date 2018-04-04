@@ -5,8 +5,9 @@
 #include "forwarder_connection.h"
 #include "i_forwarders.h"
 
-#include <unistd.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 namespace dote {
 

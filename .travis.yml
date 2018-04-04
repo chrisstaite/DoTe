@@ -33,12 +33,12 @@ matrix:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode8.3
       env:
         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode8.3
       env:
         - MATRIX_EVAL="brew install gcc && CC=gcc-7 && CXX=g++-7"
 
