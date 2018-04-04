@@ -52,30 +52,36 @@ target_link_libraries(dote dote_static)
 find_package(Threads REQUIRED)
 include(ExternalProject)
 ExternalProject_Add(
-    gtest
+    gtest-project
     URL https://github.com/google/googletest/archive/master.zip
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
     # Disable install step
     INSTALL_COMMAND "")
-ExternalProject_Get_Property(gtest source_dir binary_dir)
+ExternalProject_Get_Property(gtest-project source_dir binary_dir)
 add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest)
+add_dependencies(libgtest gtest-project)
 set_target_properties(libgtest PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
-    "INTERFACE_INCLUDE_DIRECTORIES" "${source_dir}/googletest/include"
-    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}")
+    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a")
+add_library(gtest INTERFACE)
+target_include_directories(gtest
+    INTERFACE "${source_dir}/googletest/include")
+target_link_libraries(gtest INTERFACE libgtest ${CMAKE_THREAD_LIBS_INIT})
 add_library(libgmock IMPORTED STATIC GLOBAL)
 add_dependencies(libgmock gtest)
 set_target_properties(libgmock PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a"
-    "INTERFACE_INCLUDE_DIRECTORIES" "${source_dir}/googlemock/include")
+    "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a")
 add_library(libgmock_main IMPORTED STATIC GLOBAL)
+add_library(gmock INTERFACE)
+target_include_directories(gmock
+    INTERFACE "${source_dir}/googlemock/include")
+target_link_libraries(gmock INTERFACE libgmock gtest)
 add_dependencies(libgmock_main gmock)
 set_target_properties(libgmock_main PROPERTIES
     "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock_main.a")
+add_library(gmock_main INTERFACE)
+target_link_libraries(gmock_main INTERFACE libgmock_main gmock)
 
 # Set up the test binary
 add_executable(test_dote ${TestSources})
-target_link_libraries(test_dote
-    dote_static libgtest libgmock libgmock_main)
+target_link_libraries(test_dote dote_static gmock_main)
 add_test(NAME test_dote COMMAND test_dote)
