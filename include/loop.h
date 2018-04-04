@@ -14,8 +14,8 @@ class Loop
 {
   public:
     /// The type to call when the loop is available, called with the
-    /// loop instance and the handle that caused it to be called
-    using Callback = std::function<void(Loop&, int)>;
+    /// handle that caused it to be called
+    using Callback = std::function<void(int)>;
 
     /// \brief  Create the looper
     Loop() = default;
@@ -71,6 +71,12 @@ class Loop
     /// \param handle  The handle to register for events for
     /// \param event   The event type to register for
     void registerFd(int handle, short event);
+
+    /// \brief  Deregister a given handle with m_fds for the poll
+    ///
+    /// \param handle  The handle to deregister for events for
+    /// \param event   The event type to deregister for
+    void deregisterFd(int handle, short event);
 
     /// \brief  If the handle doesn't exist in m_readFunctions,
     ///         m_writeFunctions or m_exceptFunctions then remove

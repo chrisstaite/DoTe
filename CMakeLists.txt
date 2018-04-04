@@ -7,14 +7,19 @@ enable_testing()
 
 # Set up the sources common between the tests and binaries
 set(CommonSources
-    include/openssl/client.h
-    src/openssl/client.cpp
-    include/openssl/wrapped_bio.h
-    src/openssl/wrapped_bio.cpp
     include/openssl/context.h
     src/openssl/context.cpp
+    include/openssl/ssl_connection.h
+    src/openssl/ssl_connection.cpp
     include/socket.h
     src/socket.cpp
+    include/forwarder_connection.h
+    src/forwarder_connection.cpp
+    include/forwarder_config.h
+    src/forwarder_config.cpp
+    include/i_forwarders.h
+    include/client_forwarders.h
+    src/client_forwarders.cpp
     include/loop.h
     src/loop.cpp
     include/dote.h

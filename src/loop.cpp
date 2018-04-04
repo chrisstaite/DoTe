@@ -14,7 +14,7 @@ void Loop::run()
                 auto func = m_readFunctions.find(fd.fd);
                 if (func != m_readFunctions.end())
                 {
-                    func->second(*this, fd.fd);
+                    func->second(fd.fd);
                 }
             }
             if ((fd.revents & POLLOUT))
@@ -22,7 +22,7 @@ void Loop::run()
                 auto func = m_writeFunctions.find(fd.fd);
                 if (func != m_writeFunctions.end())
                 {
-                    func->second(*this, fd.fd);
+                    func->second(fd.fd);
                 }
             }
             if ((fd.revents & ~(POLLIN | POLLOUT)))
@@ -30,7 +30,7 @@ void Loop::run()
                 auto func = m_exceptFunctions.find(fd.fd);
                 if (func != m_exceptFunctions.end())
                 {
-                    func->second(*this, fd.fd);
+                    func->second(fd.fd);
                 }
             }
         }
@@ -93,15 +93,28 @@ void Loop::registerFd(int handle, short event)
     }
 }
 
+void Loop::deregisterFd(int handle, short event)
+{
+    for (auto& fd : m_fds)
+    {
+        if (fd.fd == handle)
+        {
+            fd.events &= ~event;
+        }
+    }
+}
+
 void Loop::removeRead(int handle)
 {
     m_readFunctions.erase(handle);
+    deregisterFd(handle, POLLIN);
     cleanFd(handle);
 }
 
 void Loop::removeWrite(int handle)
 {
     m_writeFunctions.erase(handle);
+    deregisterFd(handle, POLLOUT);
     cleanFd(handle);
 }
 
@@ -117,13 +130,16 @@ void Loop::cleanFd(int handle)
             m_writeFunctions.count(handle) == 0 &&
             m_exceptFunctions.count(handle) == 0)
     {
-        for (std::vector<pollfd>::iterator it = m_fds.begin();
-             it != m_fds.end();
-             ++it)
+        auto it = m_fds.begin();
+        while (it != m_fds.end())
         {
             if (it->fd == handle)
             {
                 it = m_fds.erase(it);
+            }
+            else
+            {
+                ++it;
             }
         }
     }

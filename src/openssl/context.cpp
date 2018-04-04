@@ -13,22 +13,22 @@ Context::Context() :
     // library yet because we shouldn't keep trying
     static bool initialisationTried = false;
     
+    // Let's try to create a new context
     const SSL_METHOD* method = SSLv23_method();
-    // If unable to get the method, try initialising the library
-    // if we haven't tried to do so already...
-    if (method == nullptr && !initialisationTried)
-    {
-        initialisationTried = true;
-        SSL_library_init();
-        method = SSLv23_method();
-    }
-
-    // Now let's try to create a new context
     if (method != nullptr)
     {
         m_context = SSL_CTX_new(method);
     }
-    
+
+    // If unable to create a context, try initialising the library
+    // if we haven't tried to do so already...
+    if (m_context == nullptr && !initialisationTried)
+    {
+        initialisationTried = true;
+        SSL_library_init();
+        m_context = SSL_CTX_new(method);
+    }
+
     // If the context was created, we need to configure it ready
     // for use
     if (m_context)
@@ -42,7 +42,10 @@ void Context::configureContext()
     // Disable SSL v2 and v3 so we only use TLS
     const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
     SSL_CTX_set_options(m_context, flags);
-    
+
+    // Use the default verification paths
+    SSL_CTX_set_default_verify_paths(m_context);
+
     // We want a certificate, but we'll verify it using a certificate
     // pin rather than using a certificate chain
     SSL_CTX_set_verify(

@@ -7,19 +7,19 @@ struct sockaddr;
 
 namespace dote {
 
-/// \brief  The valid types for sockets
-enum Type : int
-{
-    /// TCP socket
-    TCP,
-    /// UDP socket
-    UDP
-};
-
 /// \brief  A wrapper around a non-blocking socket
 class Socket
 {
   public:
+    /// \brief  The valid types for sockets
+    enum Type : int
+    {
+        /// TCP socket
+        TCP,
+        /// UDP socket
+        UDP
+    };
+
     /// \brief  Construct a new non-blocking socket
     ///
     /// \param domain  The domain (PF_INET or PF_INET6)
@@ -47,8 +47,11 @@ class Socket
     Socket(const Socket&) = delete;
     Socket& operator=(const Socket&) = delete;
 
-    /// \brief  Shutdown and close the socket
+    /// \brief  Calls close
     ~Socket();
+
+    /// \brief  Shutdown and close the socket
+    void close();
 
     /// \brief  Connect the socket to a given address
     ///

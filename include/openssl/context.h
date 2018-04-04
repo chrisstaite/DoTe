@@ -30,10 +30,10 @@ class Context {
     ///
     /// \return  The raw context
     SSL_CTX* get();
-    
-    // Allow the client access to the raw context
-    friend class Client;
-  
+
+    /// Allow the connection access to the raw context
+    friend class SslConnection;
+
     /// The wrapped context
     SSL_CTX* m_context;
 };

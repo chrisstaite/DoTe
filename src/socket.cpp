@@ -3,7 +3,9 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 namespace dote {
 
@@ -14,13 +16,13 @@ namespace {
 /// \param type  The type to convert
 ///
 /// \return  The type of the socket or -1 if invalid
-int toType(Type type)
+int toType(Socket::Type type)
 {
     switch (type)
     {
-        case TCP:
+        case Socket::Type::TCP:
             return SOCK_STREAM;
-        case UDP:
+        case Socket::Type::UDP:
             return SOCK_DGRAM;
         default:
             return -1;
@@ -37,39 +39,44 @@ int toType(Type type)
 std::shared_ptr<Socket> initialise(
         const char* ip,
         unsigned short port,
-        Type type,
+        Socket::Type type,
         bool (Socket::*init)(const sockaddr*, size_t))
 {
     std::shared_ptr<Socket> socket(nullptr);
 
-    // Try doing IPv4 first
     struct sockaddr_in ip4addr;
+    struct sockaddr_in6 ip6addr;
+
+    // Try doing IPv4 first
     if (inet_pton(AF_INET, ip, &ip4addr.sin_addr) == 1)
     {
         ip4addr.sin_family = AF_INET;
         ip4addr.sin_port = htons(port);
+        memset(ip4addr.sin_zero, 0, sizeof(ip4addr.sin_zero));
         socket = std::make_shared<Socket>(PF_INET, type);
         if (!((*socket).*init)(
                 reinterpret_cast<struct sockaddr*>(&ip4addr),
                 sizeof(ip4addr)
             ))
         {
-            socket.reset();
+            if (errno != EINPROGRESS)
+            {
+                socket.reset();
+            }
         }
     }
     // Try with IPv6 on failure
-    else
+    else if (inet_pton(AF_INET6, ip, &ip6addr.sin6_addr) == 1)
     {
-        struct sockaddr_in6 ip6addr;
-        if (inet_pton(AF_INET6, ip, &ip6addr.sin6_addr) == 1)
+        ip6addr.sin6_family = AF_INET6;
+        ip6addr.sin6_port = htons(port);
+        socket = std::make_shared<Socket>(PF_INET6, type);
+        if (!((*socket).*init)(
+                reinterpret_cast<struct sockaddr*>(&ip6addr),
+                sizeof(ip6addr)
+            ))
         {
-            ip6addr.sin6_family = AF_INET6;
-            ip6addr.sin6_port = htons(port);
-            socket = std::make_shared<Socket>(PF_INET6, type);
-            if (!((*socket).*init)(
-                    reinterpret_cast<struct sockaddr*>(&ip6addr),
-                    sizeof(ip6addr)
-                ))
+            if (errno != EINPROGRESS)
             {
                 socket.reset();
             }
@@ -83,14 +90,34 @@ std::shared_ptr<Socket> initialise(
 
 Socket::Socket(int domain, Type type) :
     m_handle(socket(domain, toType(type), 0))
-{ }
+{
+    // Make the socket non-blocking
+    if (m_handle >= 0)
+    {
+        int flags = fcntl(m_handle, F_GETFL, 0);
+        if (flags == -1)
+        {
+            close();
+        }
+        else if (fcntl(m_handle, F_SETFL, flags | O_NONBLOCK) == -1)
+        {
+            close();
+        }
+    }
+}
 
 Socket::~Socket()
 {
+    close();
+}
+
+void Socket::close()
+{
     if (m_handle != -1)
     {
-        (void) shutdown(m_handle, SHUT_RDWR);
-        (void) close(m_handle);
+        (void) ::shutdown(m_handle, SHUT_RDWR);
+        (void) ::close(m_handle);
+        m_handle = -1;
     }
 }
 
