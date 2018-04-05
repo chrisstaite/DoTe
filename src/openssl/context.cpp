@@ -6,6 +6,13 @@
 namespace dote {
 namespace openssl {
 
+namespace {
+
+/// The ciphers that are made available to use
+constexpr char CIPHERS[] = "EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA256:EECDH+ECDSA+SHA384:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA384:EDH+aRSA+AESGCM:EDH+aRSA+SHA256:EDH+aRSA:EECDH:!aNULL:!eNULL:!MEDIUM:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!RC4:!SEED";
+
+}  // anon namespace
+
 Context::Context() :
     m_context(nullptr)
 {
@@ -51,6 +58,9 @@ void Context::configureContext()
     SSL_CTX_set_verify(
         m_context, SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr
     );
+
+    // Set the available ciphers
+    SSL_CTX_set_cipher_list(m_context, CIPHERS);
 }
 
 SSL_CTX* Context::get()
