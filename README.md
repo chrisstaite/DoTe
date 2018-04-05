@@ -38,3 +38,17 @@ Once built, you can run the unit tests by running:
 ~~~~
 make test
 ~~~~
+
+Run
+---
+
+Currently there is no configuration system, so if you
+want to change anything you'll have to modify src/main.cpp.
+
+By default DoTe will listen on localhost port 53 and
+forward queries to 1.1.1.1 port 853 with hostname
+verification and certificate pinned.
+
+~~~~
+./dote
+~~~~
