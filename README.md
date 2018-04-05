@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/chrisstaite/DoTe.svg?branch=master)](https://travis-ci.org/chrisstaite/DoTe)
+
 DoTe
 ====
 
@@ -15,3 +17,24 @@ The design of this software is that of event loop.  It uses entirely non-
 blocking IO for communications and is designed to run as a single thread
 in a single process.  All TLS functionality is provided by OpenSSL.
 
+Build
+-----
+
+Building requires OpenSSL, CMake and a C++11 compiler.
+
+Then all you need do is run:
+
+~~~~
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j
+~~~~
+
+Test
+----
+
+Once built, you can run the unit tests by running:
+
+~~~~
+make test
+~~~~
