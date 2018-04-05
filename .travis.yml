@@ -35,12 +35,12 @@ matrix:
     - os: osx
       osx_image: xcode8.3
       env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+        - MATRIX_EVAL="export OPENSSL_ROOT_DIR=/usr/local/opt/openssl/"
 
     - os: osx
       osx_image: xcode8.3
       env:
-        - MATRIX_EVAL="brew install gcc && CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="brew cask uninstall oclint && brew install gcc && CC=gcc-7 && CXX=g++-7 && export OPENSSL_ROOT_DIR=/usr/local/opt/openssl/"
 
 before_install:
     - eval "${MATRIX_EVAL}"
