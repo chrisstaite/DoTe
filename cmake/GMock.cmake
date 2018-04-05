@@ -20,8 +20,6 @@ target_link_libraries(gtest INTERFACE libgtest ${CMAKE_THREAD_LIBS_INIT})
 add_library(libgmock IMPORTED STATIC GLOBAL)
 add_library(gmock INTERFACE)
 add_dependencies(libgmock gtest)
-set_target_properties(libgmock PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/$<CONFIG>/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a")
 
 add_library(libgmock_main IMPORTED STATIC GLOBAL)
 add_library(gmock_main INTERFACE)
@@ -30,16 +28,17 @@ target_include_directories(gmock
     INTERFACE "${source_dir}/googlemock/include")
 target_link_libraries(gmock INTERFACE libgmock gtest)
 add_dependencies(libgmock_main gmock)
-set_target_properties(libgmock_main PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/$<CONFIG>/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a")
 
 if (CMAKE_GENERATOR MATCHES "Xcode")
     set_target_properties(libgtest PROPERTIES
-        IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/gtest/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a")
+        IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/gtest/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a"
+        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/gtest/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gtestd.a")
     set_target_properties(libgmock PROPERTIES
-        IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a")
+        IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a"
+        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gmockd.a")
     set_target_properties(libgmock_main PROPERTIES
-        IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a")
+        IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a"
+        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_maind.a")
 else ()
     set_target_properties(libgtest PROPERTIES
         IMPORTED_LOCATION "${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a")
