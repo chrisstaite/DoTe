@@ -131,6 +131,8 @@ class ForwarderConnection
     std::shared_ptr<Socket> m_socket;
     /// A queue of pending write buffers
     std::deque<std::vector<char>> m_buffers;
+    /// The expected hostname for the remote client
+    std::string m_hostname;
     /// The expected pin for the remote client
     std::string m_pin;
 };

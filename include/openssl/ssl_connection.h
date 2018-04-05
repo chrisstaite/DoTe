@@ -55,15 +55,6 @@ class SslConnection
     /// \brief  Clean up the wrapped connection
     ~SslConnection();
 
-    /// \brief  Set the hostname to verify, must be called before
-    ///         calling connect() otherwise it won't be verified
-    ///
-    /// \param hostname  The hostname to verify against
-    ///
-    /// \return  True if the hostname verification was successfully
-    ///          added to the context
-    bool setHostname(const std::string& hostname);
-
     /// \brief  Set the underlying socket for this connection
     ///
     /// \param handle  The underlying socket to set on this connection
@@ -74,6 +65,14 @@ class SslConnection
     ///
     /// \return  The Base64 encoding of the peer certificate
     std::string getPeerCertificateHash();
+
+    /// \brief  Check the connected peer certificate is valid for the
+    ///         given hostname after connect has completed
+    ///
+    /// \param hostname  The hostname to verify
+    ///
+    /// \return  True if the hostname is valid for the connected peer
+    bool verifyHostname(const std::string& hostname);
 
     /// \brief  Connect the underlying connection
     ///

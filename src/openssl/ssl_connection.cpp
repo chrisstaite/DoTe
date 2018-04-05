@@ -1,6 +1,7 @@
 
 #include "openssl/ssl_connection.h"
 #include "openssl/context.h"
+#include "openssl/hostname_verifier.h"
 
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
@@ -110,17 +111,16 @@ std::string SslConnection::getPeerCertificateHash()
     return hash;
 }
 
-bool SslConnection::setHostname(const std::string& hostname)
+bool SslConnection::verifyHostname(const std::string& hostname)
 {
     bool result = false;
     if (m_ssl)
     {
-        X509_VERIFY_PARAM* param = SSL_get0_param(m_ssl);
-        X509_VERIFY_PARAM_set_hostflags(param, 0);
-        if (X509_VERIFY_PARAM_set1_host(param, hostname.c_str(), hostname.length()))
+        X509* certificate = SSL_get_peer_certificate(m_ssl);
+        if (certificate)
         {
-            SSL_set_verify(m_ssl, SSL_VERIFY_PEER, 0);
-            result = true;
+            HostnameVerifier verifier(certificate);
+            result = verifier.isValid(hostname);
         }
     }
     return result;

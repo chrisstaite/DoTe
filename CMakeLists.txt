@@ -11,6 +11,8 @@ set(CommonSources
     src/openssl/context.cpp
     include/openssl/ssl_connection.h
     src/openssl/ssl_connection.cpp
+    include/openssl/hostname_verifier.h
+    src/openssl/hostname_verifier.cpp
     include/socket.h
     src/socket.cpp
     include/forwarder_connection.h

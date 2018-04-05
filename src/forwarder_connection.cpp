@@ -24,13 +24,14 @@ ForwarderConnection::ForwarderConnection(std::shared_ptr<Loop> loop,
     m_pin()
 {
     auto chosen = m_config->get();
-    if (chosen != m_config->end() && m_connection.setHostname(chosen->host))
+    if (chosen != m_config->end())
     {
         m_socket = Socket::connect(
             chosen->ip.c_str(), chosen->port, Socket::Type::TCP
         );
+        m_hostname = chosen->host;
         m_pin = chosen->pin;
-        
+
         if (m_socket)
         {
             m_connection.setSocket(m_socket->get());
@@ -55,7 +56,8 @@ bool ForwarderConnection::closed()
 
 bool ForwarderConnection::verifyConnection()
 {
-    return m_connection.getPeerCertificateHash() == m_pin;
+    return m_connection.verifyHostname(m_hostname) &&
+        m_connection.getPeerCertificateHash() == m_pin;
 }
 
 void ForwarderConnection::connect(int handle)
