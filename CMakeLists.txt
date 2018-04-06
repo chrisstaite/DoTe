@@ -50,9 +50,14 @@ set(TestSources
 # into the real binary
 find_package(OpenSSL REQUIRED)
 add_library(dote_static ${CommonSources})
-target_include_directories(dote_static
-    PRIVATE ${OPENSSL_INCLUDE_DIR}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
+    target_include_directories(dote_static
+        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+else()
+    include_directories(${OPENSSL_INCLUDE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+endif()
 target_link_libraries(dote_static ${OPENSSL_LIBRARIES})
 
 # Set up the binary application

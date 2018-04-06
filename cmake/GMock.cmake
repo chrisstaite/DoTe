@@ -13,8 +13,12 @@ ExternalProject_Get_Property(gtest-project source_dir binary_dir)
 add_library(libgtest IMPORTED STATIC GLOBAL)
 add_dependencies(libgtest gtest-project)
 add_library(gtest INTERFACE)
-target_include_directories(gtest
-    INTERFACE "${source_dir}/googletest/include")
+if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
+    target_include_directories(gtest
+        INTERFACE "${source_dir}/googletest/include")
+else()
+    include_directories("${source_dir}/googletest/include")
+endif()
 target_link_libraries(gtest INTERFACE libgtest ${CMAKE_THREAD_LIBS_INIT})
 
 add_library(libgmock IMPORTED STATIC GLOBAL)
@@ -24,8 +28,12 @@ add_dependencies(libgmock gtest)
 add_library(libgmock_main IMPORTED STATIC GLOBAL)
 add_library(gmock_main INTERFACE)
 target_link_libraries(gmock_main INTERFACE libgmock_main gmock)
-target_include_directories(gmock
-    INTERFACE "${source_dir}/googlemock/include")
+if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
+    target_include_directories(gtest
+        INTERFACE "${source_dir}/googlemock/include")
+else()
+    include_directories("${source_dir}/googlemock/include")
+endif()
 target_link_libraries(gmock INTERFACE libgmock gtest)
 add_dependencies(libgmock_main gmock)
 
