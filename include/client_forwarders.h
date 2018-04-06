@@ -28,7 +28,7 @@ class ClientForwarders : public IForwarders
     ClientForwarders& operator=(const ClientForwarders&) = delete;
 
     /// \brief  Destroy the forwarders
-    ~ClientForwarders();
+    ~ClientForwarders() noexcept;
 
     /// \brief  Get the forwarder for the given client
     ///

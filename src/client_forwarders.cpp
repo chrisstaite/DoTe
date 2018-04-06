@@ -50,7 +50,7 @@ ClientForwarders::ClientForwarders(std::shared_ptr<Loop> loop,
     m_connections()
 { }
 
-ClientForwarders::~ClientForwarders()
+ClientForwarders::~ClientForwarders() noexcept
 { }
 
 std::shared_ptr<ForwarderConnection> ClientForwarders::forwarder(

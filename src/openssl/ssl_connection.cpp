@@ -29,7 +29,7 @@ std::string base64(unsigned char* data, unsigned int length)
     }
 
     BIO* bmem = BIO_new(BIO_s_mem());
-    if (!b64 || !bmem)
+    if (!bmem)
     {
         BIO_free_all(b64);
         return { };
