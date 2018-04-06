@@ -1,7 +1,7 @@
 #!/bin/bash
 # Based on a test script from avsm/ocaml repo https://github.com/avsm/ocaml
 
-CHROOT_DIR=/tmp/arm-chroot
+CHROOT_DIR=/tmp/mips-chroot
 MIRROR=http://ftp.us.debian.org/debian/
 VERSION=wheezy
 CHROOT_ARCH=mips
@@ -15,7 +15,7 @@ GUEST_DEPENDENCIES="build-essential libssl1.0.0"
 # Command used to run the tests
 TEST_COMMAND="make test"
 
-function setup_arm_chroot {
+function setup_mips_chroot {
     # Host dependencies
     sudo apt-get install -qq -y ${HOST_DEPENDENCIES}
 
@@ -23,7 +23,7 @@ function setup_arm_chroot {
     sudo mkdir ${CHROOT_DIR}
     sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential \
         --arch=${CHROOT_ARCH} ${VERSION} ${CHROOT_DIR} ${MIRROR}
-    sudo cp /usr/bin/qemu-arm-static ${CHROOT_DIR}/usr/bin/
+    sudo cp /usr/bin/qemu-mips-static ${CHROOT_DIR}/usr/bin/
     sudo chroot ${CHROOT_DIR} ./debootstrap/debootstrap --second-stage
     sudo sbuild-createchroot --arch=${CHROOT_ARCH} --foreign --setup-only \
         ${VERSION} ${CHROOT_DIR} ${MIRROR}
@@ -51,15 +51,15 @@ function setup_arm_chroot {
 }
 
 if [ -e "/.chroot_is_done" ]; then
-  # We are inside ARM chroot
+  # We are inside MIPS chroot
   echo "Running inside chrooted environment"
 
   . ./envvars.sh
 else
   if [ "${ARCH}" = "mips" ]; then
-    # ARM test run, need to set up chrooted environment first
-    echo "Setting up chrooted ARM environment"
-    setup_arm_chroot
+    # MIPS test run, need to set up chrooted environment first
+    echo "Setting up chrooted MIPS environment"
+    setup_mips_chroot
   fi
 fi
 
