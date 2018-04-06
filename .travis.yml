@@ -3,18 +3,14 @@ language: cpp
 matrix:
   include:
   - os: linux
-    addons:
-      apt:
-        sources:
-        - llvm-toolchain-trusty-5.0
-        packages:
-        - clang-5.0
     env:
-    - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+    - MATRIX_EVAL=""
+
   - os: linux
     sudo: required
     env:
     - MATRIX_EVAL="" ARCH="mips"
+
   - os: osx
     osx_image: xcode8.3
     env:

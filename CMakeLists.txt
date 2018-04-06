@@ -1,8 +1,17 @@
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 
 project(DoTe CXX)
-set(CMAKE_CXX_STANDARD 11)
+
+# Enable C++11 support
+if(CMAKE_VERSION VERSION_LESS "3.1")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    endif()
+else()
+    set(CMAKE_CXX_STANDARD 11)
+endif()
+
 enable_testing()
 
 # Set up the sources common between the tests and binaries

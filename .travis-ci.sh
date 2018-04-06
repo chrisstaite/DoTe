@@ -10,7 +10,7 @@ CHROOT_ARCH=mips
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
 
 # Debian package dependencies for the chrooted environment
-GUEST_DEPENDENCIES="build-essential libssl1.0.0 gcc-4.9"
+GUEST_DEPENDENCIES="build-essential libssl1.0.0 cmake"
 
 # Command used to run the tests
 TEST_COMMAND="make test"
@@ -55,14 +55,6 @@ if [ -e "/.chroot_is_done" ]; then
   echo "Running inside chrooted environment"
 
   . ./envvars.sh
-
-  echo "Installing updated cmake"
-  wget --no-check-certificate https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz
-  tar -xzf cmake-3.11.0.tar.gz
-  cd cmake-3.11.0
-  ./bootstrap
-  make
-  make install
 else
   if [ "${ARCH}" = "mips" ]; then
     # MIPS test run, need to set up chrooted environment first
