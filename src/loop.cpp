@@ -5,7 +5,8 @@ namespace dote {
 
 void Loop::run()
 {
-    while (poll(&m_fds.front(), m_fds.size(), -1) >= 0)
+    while (m_fds.size() > 0 &&
+            poll(&m_fds.front(), m_fds.size(), -1) >= 0)
     {
         for (const auto& fd : m_fds)
         {

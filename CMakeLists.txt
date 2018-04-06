@@ -45,9 +45,15 @@ set(BinarySources
 
 # Set up the sources for the tests
 set(TestSources
-    test/openssl/test_client.cpp
-    test/openssl/test_wrapped_bio.cpp
-    test/openssl/test_context.cpp)
+    test/openssl/test_context.cpp
+    test/openssl/test_ssl_connection.cpp
+    test/openssl/test_hostname_verifier.cpp
+    test/test_socket.cpp
+    test/test_forwarder_connection.cpp
+    test/test_forwarder_config.cpp
+    test/test_client_forwarders.cpp
+    test/test_loop.cpp
+    test/test_dote.cpp)
 
 # Set up the library of the code that can be tested and compiled
 # into the real binary
