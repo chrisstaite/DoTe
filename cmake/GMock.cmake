@@ -12,40 +12,22 @@ ExternalProject_Get_Property(gtest-project source_dir binary_dir)
 
 add_library(libgtest IMPORTED STATIC GLOBAL)
 add_dependencies(libgtest gtest-project)
-if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
-    add_library(gtest INTERFACE)
-    target_include_directories(gtest
-        INTERFACE "${source_dir}/googletest/include")
-else()
-    set(GTEST_SOURCES)
-    add_library(gtest $(GTEST_SOURCES))
-    set_target_properties(gtest PROPERTIES LINKER_LANGUAGE CXX)
-    include_directories("${source_dir}/googletest/include")
-endif()
-target_link_libraries(gtest INTERFACE libgtest ${CMAKE_THREAD_LIBS_INIT})
+file(MAKE_DIRECTORY "${source_dir}/googletest/include")
+set_target_properties(libgtest PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${source_dir}/googletest/include"
+    INTERFACE_LINK_LIBRARIES "${CMAKE_THREAD_LIBS_INIT}")
 
 add_library(libgmock IMPORTED STATIC GLOBAL)
-if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
-    add_library(gmock INTERFACE)
-    target_include_directories(gmock
-        INTERFACE "${source_dir}/googletest/include")
-else()
-    set(GMOCK_SOURCES)
-    add_library(gmock $(GMOCK_SOURCES))
-    set_target_properties(gmock PROPERTIES LINKER_LANGUAGE CXX)
-    include_directories("${source_dir}/googlemock/include")
-endif()
-target_link_libraries(gmock INTERFACE libgmock gtest)
+add_dependencies(libgmock libgtest)
+file(MAKE_DIRECTORY "${source_dir}/googlemock/include")
+set_target_properties(libgmock PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${source_dir}/googlemock/include"
+    INTERFACE_LINK_LIBRARIES "libgtest")
 
 add_library(libgmock_main IMPORTED STATIC GLOBAL)
-if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
-    add_library(gmock_main INTERFACE)
-else()
-    set(GMOCK_MAIN_SOURCES)
-    add_library(gmock_main $(GMOCK_MAIN_SOURCES))
-    set_target_properties(gmock_main PROPERTIES LINKER_LANGUAGE CXX)
-endif()
-target_link_libraries(gmock_main INTERFACE libgmock_main gmock)
+add_dependencies(libgmock_main libgmock)
+set_target_properties(libgmock_main PROPERTIES
+    INTERFACE_LINK_LIBRARIES "libgmock")
 
 if (CMAKE_GENERATOR MATCHES "Xcode")
     set_target_properties(libgtest PROPERTIES

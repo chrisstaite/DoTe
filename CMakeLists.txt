@@ -72,5 +72,5 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GMock.cmake)
 
 # Set up the test binary
 add_executable(test_dote ${TestSources})
-target_link_libraries(test_dote dote_static gmock_main)
+target_link_libraries(test_dote dote_static libgmock_main)
 add_test(NAME test_dote COMMAND test_dote)
