@@ -10,7 +10,7 @@ CHROOT_ARCH=mips
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
 
 # Debian package dependencies for the chrooted environment
-GUEST_DEPENDENCIES="build-essential libssl1.0.0 cmake"
+GUEST_DEPENDENCIES="build-essential libssl-dev cmake g++-4.7"
 
 # Command used to run the tests
 TEST_COMMAND="make test"
@@ -31,6 +31,8 @@ function setup_mips_chroot {
     # Create file with environment variables which will be used inside chrooted
     # environment
     echo "export ARCH=${ARCH}" > envvars.sh
+    echo "export CC=gcc-4.7" >> envvars.sh
+    echo "export CXX=g++-4.7" >> envvars.sh
     echo "export TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}" >> envvars.sh
     chmod a+x envvars.sh
 
