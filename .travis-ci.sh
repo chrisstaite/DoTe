@@ -10,7 +10,7 @@ CHROOT_ARCH=mips
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
 
 # Debian package dependencies for the chrooted environment
-GUEST_DEPENDENCIES="build-essential cmake libssl1.0.0"
+GUEST_DEPENDENCIES="build-essential libssl1.0.0"
 
 # Command used to run the tests
 TEST_COMMAND="make test"
@@ -47,7 +47,7 @@ function setup_mips_chroot {
     sudo touch ${CHROOT_DIR}/.chroot_is_done
 
     # Call ourselves again which will cause tests to run
-    sudo chroot ${CHROOT_DIR} bash -c "cd ${TRAVIS_BUILD_DIR} && bash .travis-ci.sh"
+    sudo chroot ${CHROOT_DIR} bash -c "cd ${TRAVIS_BUILD_DIR} && bash -ex .travis-ci.sh"
 }
 
 if [ -e "/.chroot_is_done" ]; then
@@ -60,7 +60,7 @@ if [ -e "/.chroot_is_done" ]; then
   wget https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz
   tar -xzf cmake-3.11.0.tar.gz
   cd cmake-3.11.0
-  cmake .
+  ./bootstrap
   make
   make install
 else
