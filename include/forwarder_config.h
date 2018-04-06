@@ -46,12 +46,12 @@ class ForwarderConfig
     ///         end() before using it
     ///
     /// \return  The chosen configuration
-    std::vector<Forwarder>::iterator get();
+    std::vector<Forwarder>::const_iterator get() const;
 
     /// \brief  Get the end marker for the configuration
     ///
     /// \return  The invalid configuration marker
-    std::vector<Forwarder>::iterator end();
+    std::vector<Forwarder>::const_iterator end() const;
 
   private:
     /// The available forwarders that can be opened

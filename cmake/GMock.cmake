@@ -31,6 +31,12 @@ add_dependencies(libgmock_main libgmock)
 set_target_properties(libgmock_main PROPERTIES
     INTERFACE_LINK_LIBRARIES "libgmock")
 
+if (CMAKE_VERSION VERSION_LESS "2.8.12")
+    # Old CMake is stupid
+    include_directories("${source_dir}/googletest/include")
+    include_directories("${source_dir}/googlemock/include")
+endif ()
+
 if (CMAKE_GENERATOR MATCHES "Xcode")
     set_target_properties(libgtest PROPERTIES
         IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/gtest/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a"

@@ -18,16 +18,16 @@ void ForwarderConfig::addForwarder(const char *ip,
     m_forwarders.emplace_back(std::move(forwarder));
 }
 
-std::vector<ForwarderConfig::Forwarder>::iterator ForwarderConfig::get()
+std::vector<ForwarderConfig::Forwarder>::const_iterator ForwarderConfig::get() const
 {
     // TODO: Choose which is best rather than just the first based on a
     //       number of factors, i.e. whether there was a previous failure
-    return m_forwarders.begin();
+    return m_forwarders.cbegin();
 }
 
-std::vector<ForwarderConfig::Forwarder>::iterator ForwarderConfig::end()
+std::vector<ForwarderConfig::Forwarder>::const_iterator ForwarderConfig::end() const
 {
-    return m_forwarders.end();
+    return m_forwarders.cend();
 }
 
 }  // namespace dote

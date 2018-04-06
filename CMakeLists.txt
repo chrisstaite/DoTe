@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(DoTe CXX)
 
-# Alloc C code to be compiled for CMake tests
+# Allow C code to be compiled for CMake tests
 enable_language(C)
 
 # Enable C++11 support
