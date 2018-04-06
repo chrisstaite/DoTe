@@ -57,7 +57,7 @@ if [ -e "/.chroot_is_done" ]; then
   . ./envvars.sh
 
   echo "Installing updated cmake"
-  wget https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz
+  wget --no-check-certificate https://cmake.org/files/v3.11/cmake-3.11.0.tar.gz
   tar -xzf cmake-3.11.0.tar.gz
   cd cmake-3.11.0
   ./bootstrap
