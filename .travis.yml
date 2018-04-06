@@ -46,6 +46,4 @@ before_install:
     - eval "${MATRIX_EVAL}"
 
 script:
-    - mkdir build && cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
-    - make -j
+    - bash -ex .travis-ci.sh
