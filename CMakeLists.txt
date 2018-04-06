@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(DoTe CXX)
 
+# Alloc C code to be compiled for CMake tests
+enable_language(C)
+
 # Enable C++11 support
 if(CMAKE_VERSION VERSION_LESS "3.1")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
