@@ -13,6 +13,7 @@ matrix:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
     - os: linux
+      sudo: required
       env:
         - MATRIX_EVAL="" ARCH="mips" 
 
