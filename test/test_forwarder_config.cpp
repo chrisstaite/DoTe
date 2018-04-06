@@ -21,13 +21,23 @@ TEST(TestForwarderConfig, NotEmpty)
 TEST(TestForwarderConfig, GetFirst)
 {
     ForwarderConfig config;
-    config.addForwarder("ip", "host", "pin");
-    config.addForwarder("ip2", "host2", "pin2");
+    config.addForwarder("ip", "host", "pin", 1);
+    config.addForwarder("ip2", "host2", "pin2", 2);
     auto first = config.get();
     ASSERT_NE(first, config.end());
     EXPECT_EQ(first->ip, "ip");
     EXPECT_EQ(first->host, "host");
     EXPECT_EQ(first->pin, "pin");
+    EXPECT_EQ(first->port, 1);
+}
+
+TEST(TestForwarderConfig, DefaultPort)
+{
+    ForwarderConfig config;
+    config.addForwarder("ip", "host", "pin");
+    auto first = config.get();
+    ASSERT_NE(first, config.end());
+    EXPECT_EQ(first->port, 853);
 }
 
 }  // namespace dote

@@ -61,7 +61,7 @@ find_package(OpenSSL REQUIRED)
 add_library(dote_static ${CommonSources})
 if (NOT CMAKE_VERSION VERSION_LESS 2.8.12)
     target_include_directories(dote_static
-        PRIVATE ${OPENSSL_INCLUDE_DIR}
+        PUBLIC ${OPENSSL_INCLUDE_DIR}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 else()
     include_directories(${OPENSSL_INCLUDE_DIR}
@@ -78,5 +78,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GMock.cmake)
 
 # Set up the test binary
 add_executable(test_dote ${TestSources})
-target_link_libraries(test_dote dote_static libgmock_main libgmock libgtest)
+target_link_libraries(test_dote
+    dote_static
+    libgmock_main libgmock libgtest ${CMAKE_THREAD_LIBS_INIT})
 add_test(NAME test_dote COMMAND test_dote)
