@@ -72,4 +72,4 @@ cmake ..
 make -j
 
 echo "Running tests"
-make test
+make test && cp dote ../

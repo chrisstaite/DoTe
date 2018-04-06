@@ -2,28 +2,35 @@ language: cpp
 
 matrix:
   include:
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-5.0
-          packages:
-            - clang-5.0
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-
-    - os: linux
-      sudo: required
-      env:
-        - MATRIX_EVAL="" ARCH="mips" 
-
-    - os: osx
-      osx_image: xcode8.3
-      env:
-        - MATRIX_EVAL="export OPENSSL_ROOT_DIR=/usr/local/opt/openssl/"
+  - os: linux
+    addons:
+      apt:
+        sources:
+        - llvm-toolchain-trusty-5.0
+        packages:
+        - clang-5.0
+    env:
+    - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+  - os: linux
+    sudo: required
+    env:
+    - MATRIX_EVAL="" ARCH="mips"
+  - os: osx
+    osx_image: xcode8.3
+    env:
+    - MATRIX_EVAL="export OPENSSL_ROOT_DIR=/usr/local/opt/openssl/"
 
 before_install:
-    - eval "${MATRIX_EVAL}"
+- eval "${MATRIX_EVAL}"
 
 script:
-    - bash -ex .travis-ci.sh
+- bash -ex .travis-ci.sh
+
+deploy:
+  provider: releases
+  file: "dote"
+  api_key:
+    secure: R3jFYH5fowe7eKjhMOtm/RUX2BBei+vkIp+5mQ03m2Kk/PjDbze+0QYTuRKBewuyf1zKI4XmDZHQ3RPg+xAAMPQZyFnzB8K2Nu2QHuNGZRnA55h8eSl5YCdXowvLTVuIenvvcdBm2I4WeYD2TmFkfTTyJ6xWqnH4GP0CjRStcBdiyCTvBKdzEiFzUzcoAr4zCdB6SaR/RJ/3zWQKiPKSLTRfFZk485njYwUzlNe4JJNVI3qRQxZQUtcwDcacf2qq7B3OhDqMk+Gf1tEc0jHjoDVzvvpAlZKpyZUZSKn7RyxKDIALLDfHggt9ZcYZ6bh7FE4qmHWCd8ZGGzfGSiisYQBmzk+zJKhNJbgynSenIuGyy4K8H/u6xnCB8GdZjui1k2sW2y7x4Qub0SPpqej31a34cr2ye43xuQ2qtbdr4NvBit6cF9KCVPepM/GuPQox/om7/OXF4yiFN+y7Gdvec7QzbdV3GPom678R33524l4IgPDtIQA9Q3TXHYw+UhKj8NiieT/DQttxuthdewUeKtLw5B1MELaZqjj9icpyhh0q9Oy1GSO2PvKKr7MEJdc0OJKtuf7iz4/78B+nrRFrsjUooIfHyglx7ijN1bVpCsk9XMOnr7FE0gc7awStsf2YsH7gLJnrJeDe3v+KbO/mmcEclPaJ4Wb8a1gcXzy8ZaE=
+  skip_cleanup: true
+  on:
+    tags: true
