@@ -45,7 +45,7 @@ bool Loop::registerRead(int handle, Callback callback)
     }
 
     registerFd(handle, POLLIN);
-    m_readFunctions.emplace(handle, std::move(callback));
+    m_readFunctions.insert( { handle, std::move(callback) } );
     return true;
 }
 
@@ -57,7 +57,7 @@ bool Loop::registerWrite(int handle, Callback callback)
     }
     
     registerFd(handle, POLLOUT);
-    m_writeFunctions.emplace(handle, std::move(callback));
+    m_writeFunctions.insert( { handle, std::move(callback) } );
     return true;
 }
 
@@ -70,7 +70,7 @@ bool Loop::registerException(int handle, Callback callback)
     
     // Nothing to register for, poll always returns exceptions
     registerFd(handle, 0);
-    m_exceptFunctions.emplace(handle, std::move(callback));
+    m_exceptFunctions.insert( { handle, std::move(callback) } );
     return true;
 }
 
