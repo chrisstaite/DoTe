@@ -6,9 +6,16 @@
 namespace dote {
 namespace openssl {
 
-TEST(TestContext, Test)
+class TestingContext : public Context
 {
-    Context context;
+  public:
+    using Context::get;
+};
+
+TEST(TestContext, ContextCreated)
+{
+    TestingContext context;
+    EXPECT_NE(nullptr, context.get());
 }
 
 }  // namespace openssl

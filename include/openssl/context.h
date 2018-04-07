@@ -20,12 +20,8 @@ class Context {
     
     /// \brief  Clean up the context
     ~Context();
-    
-  private:
-    /// \brief  If the context has been created, initialise it ready
-    ///         for use.
-    void configureContext();
 
+  protected:
     /// \brief  Get the raw context
     ///
     /// \return  The raw context
@@ -33,6 +29,11 @@ class Context {
 
     /// Allow the connection access to the raw context
     friend class SslConnection;
+
+  private:
+    /// \brief  If the context has been created, initialise it ready
+    ///         for use.
+    void configureContext();
 
     /// The wrapped context
     SSL_CTX* m_context;
