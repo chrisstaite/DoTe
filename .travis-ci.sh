@@ -64,7 +64,7 @@ else
     setup_mips_chroot
 
     # Copy the artifact out of the chroot
-    cp ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}/dote ${TRAVIS_BUILD_DIR}
+    cp ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}/${OUTPUT_BINARY} ${TRAVIS_BUILD_DIR}/
 
     # Don't run the build twice
     exit
@@ -80,4 +80,4 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j
 
 echo "Running tests"
-make test && cp dote ../
+make test && cp dote ../${OUTPUT_BINARY}

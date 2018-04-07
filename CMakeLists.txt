@@ -69,6 +69,10 @@ else()
 endif()
 target_link_libraries(dote_static ${OPENSSL_LIBRARIES})
 
+# Strip release
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE
+    "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
+
 # Set up the binary application
 add_executable(dote ${BinarySources})
 target_link_libraries(dote dote_static)
