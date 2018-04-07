@@ -62,6 +62,12 @@ else
     # MIPS test run, need to set up chrooted environment first
     echo "Setting up chrooted MIPS environment"
     setup_mips_chroot
+
+    # Copy the artifact out of the chroot
+    cp ${CHROOT_DIR}/${TRAVIS_BUILD_DIR}/dote ${TRAVIS_BUILD_DIR}
+
+    # Don't run the build twice
+    exit
   fi
 fi
 
