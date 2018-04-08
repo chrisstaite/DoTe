@@ -27,6 +27,7 @@ script:
 
 deploy:
   provider: releases
+  file_glob: true
   file: "dote_*"
   target_commitish: $TRAVIS_COMMIT
   tag_name: $TRAVIS_TAG
