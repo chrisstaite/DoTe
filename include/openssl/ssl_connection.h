@@ -60,11 +60,11 @@ class SslConnection
     /// \param handle  The underlying socket to set on this connection
     void setSocket(int handle);
 
-    /// \brief  Get the Base64 encoding of the SHA-256 hash of the
-    ///         attached peer certificate after connect has completed
+    /// \brief  Get the SHA-256 hash of the public key of the attached
+    ///         peer certificate after connect has completed
     ///
-    /// \return  The Base64 encoding of the peer certificate
-    std::string getPeerCertificateHash();
+    /// \return  The SHA-256 hash of the certificate's public key
+    std::vector<unsigned char> getPeerCertificateHash();
 
     /// \brief  Check the connected peer certificate is valid for the
     ///         given hostname after connect has completed

@@ -134,7 +134,7 @@ class ForwarderConnection
     /// The expected hostname for the remote client
     std::string m_hostname;
     /// The expected pin for the remote client
-    std::string m_pin;
+    std::vector<unsigned char> m_pin;
 };
 
 }  // namespace dote

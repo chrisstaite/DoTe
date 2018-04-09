@@ -25,6 +25,8 @@ set(CommonSources
     src/openssl/ssl_connection.cpp
     include/openssl/hostname_verifier.h
     src/openssl/hostname_verifier.cpp
+    include/openssl/base64.h
+    src/openssl/base64.cpp
     include/socket.h
     src/socket.cpp
     include/forwarder_connection.h
@@ -48,6 +50,7 @@ set(TestSources
     test/openssl/test_context.cpp
     test/openssl/test_ssl_connection.cpp
     test/openssl/test_hostname_verifier.cpp
+    test/openssl/test_base64.cpp
     test/test_socket.cpp
     test/test_forwarder_connection.cpp
     test/test_forwarder_config.cpp

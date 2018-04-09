@@ -8,46 +8,10 @@
 #include <openssl/x509_vfy.h>
 
 #include <string>
+#include <array>
 
 namespace dote {
 namespace openssl {
-
-namespace {
-
-/// \brief  Base64 encode a buffer
-///
-/// \param data    The buffer to encode
-/// \param length  The length of the buffer
-///
-/// \return  The base64 encoding or empty on error
-std::string base64(unsigned char* data, unsigned int length)
-{
-    BIO* b64 = BIO_new(BIO_f_base64());
-    if (!b64)
-    {
-        return { };
-    }
-
-    BIO* bmem = BIO_new(BIO_s_mem());
-    if (!bmem)
-    {
-        BIO_free_all(b64);
-        return { };
-    }
-
-    b64 = BIO_push(b64, bmem);
-    BIO_write(b64, data, length);
-    BIO_flush(b64);
-
-    BUF_MEM *bptr;
-    BIO_get_mem_ptr(b64, &bptr);
-    std::string result(bptr->data, bptr->length - 1);
-    BIO_free_all(b64);
-
-    return result;
-}
-
-}  // anon namespace
 
 using namespace std::placeholders;
 
@@ -91,20 +55,26 @@ void SslConnection::setSocket(int handle)
     }
 }
 
-std::string SslConnection::getPeerCertificateHash()
+std::vector<unsigned char> SslConnection::getPeerCertificateHash()
 {
-    std::string hash;
+    std::vector<unsigned char> hash;
     if (m_ssl)
     {
         X509* certificate = SSL_get_peer_certificate(m_ssl);
         const EVP_MD* sha256 = EVP_sha256();
         if (certificate && sha256)
         {
-            unsigned char md[EVP_MAX_MD_SIZE];
-            unsigned int length = sizeof(md);
-            if (X509_pubkey_digest(certificate, sha256, md, &length) == 1)
+            hash.resize(EVP_MAX_MD_SIZE);
+            unsigned int length = hash.size();
+            if (X509_pubkey_digest(
+                        certificate, sha256, hash.data(), &length
+                    ) == 1)
             {
-                hash = base64(md, length);
+                hash.resize(length);
+            }
+            else
+            {
+                hash.clear();
             }
         }
     }

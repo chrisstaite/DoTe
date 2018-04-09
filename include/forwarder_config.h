@@ -18,7 +18,7 @@ class ForwarderConfig
         /// The host to verify the certificate common name against
         std::string host;
         /// The base64 encoded SHA-256 hash of the certificate
-        std::string pin;
+        std::vector<unsigned char> pin;
         /// The port to connect to
         unsigned short port;
     };
@@ -37,7 +37,9 @@ class ForwarderConfig
     /// \param pin   The base64 encoded SHA-256 hash of the
     ///              certificate that is connected to
     /// \param port  The port to connect to
-    void addForwarder(const char* ip,
+    ///
+    /// \return  True if the forwarder is valid or false if not
+    bool addForwarder(const char* ip,
                       const char* host,
                       const char* pin,
                       unsigned short port = 853);

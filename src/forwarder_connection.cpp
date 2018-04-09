@@ -57,7 +57,7 @@ bool ForwarderConnection::closed()
 bool ForwarderConnection::verifyConnection()
 {
     return m_connection.verifyHostname(m_hostname) &&
-        m_connection.getPeerCertificateHash() == m_pin;
+        (m_pin.empty() || m_connection.getPeerCertificateHash() == m_pin);
 }
 
 void ForwarderConnection::connect(int handle)
