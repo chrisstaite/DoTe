@@ -5,6 +5,7 @@
 #include <openssl/evp.h>
 
 #include <cstdio>
+#include <memory>
 
 namespace dote {
 namespace openssl {
