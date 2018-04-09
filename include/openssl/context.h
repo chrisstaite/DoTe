@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <string>
+
 typedef struct ssl_ctx_st SSL_CTX;
 
 namespace dote {
@@ -13,7 +15,9 @@ class Context {
   public:
     /// \brief  Create a new OpenSSL context, initialising the library
     ///         if required.
-    Context();
+    ///
+    /// \param ciphers  The ciphers to use with OpenSSL
+    Context(const std::string& ciphers);
     
     Context(const Context&) = delete;
     Context& operator=(const Context&) = delete;

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "config_parser.h"
+
 #include <vector>
 #include <memory>
 
@@ -26,18 +28,17 @@ class Server
 
     /// \brief  Add a server interface
     ///
-    /// \param ip    The IP to bind the server to
-    /// \param port  The port to bind the server to
+    /// \param config  The configuration to add
     ///
     /// \return  True if able to add the server
-    bool addServer(const char* ip, unsigned short port = 53);
+    bool addServer(const ConfigParser::Server& config);
 
   private:
     /// \brief  Handle an incoming packet on the server
     ///
     /// \param handle  The handle that the read event is on
     void handleDnsRequest(int handle);
-  
+
     /// The looper to read using
     std::shared_ptr<Loop> m_loop;
     /// The available forwarders

@@ -9,12 +9,16 @@ namespace openssl {
 class TestingContext : public Context
 {
   public:
+    TestingContext(const std::string& ciphers) :
+        Context(ciphers)
+    { }
+
     using Context::get;
 };
 
 TEST(TestContext, ContextCreated)
 {
-    TestingContext context;
+    TestingContext context("ALL");
     EXPECT_NE(nullptr, context.get());
 }
 

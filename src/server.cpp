@@ -20,9 +20,11 @@ Server::Server(std::shared_ptr<Loop> loop,
     m_serverSockets()
 { }
 
-bool Server::addServer(const char *ip, unsigned short port)
+bool Server::addServer(const ConfigParser::Server& config)
 {
-    auto serverSocket = Socket::bind(ip, port, Socket::Type::UDP);
+    auto serverSocket = Socket::bind(
+        config.ip.c_str(), config.port, Socket::Type::UDP
+    );
     if (!serverSocket)
     {
         return false;
