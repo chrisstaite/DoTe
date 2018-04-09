@@ -10,19 +10,19 @@ class Loop;
 class Socket;
 class IForwarders;
 
-/// \brief  The core for DoTe
-class Dote
+/// \brief  The UDP server to recieve connections on
+class Server
 {
   public:
     /// \brief  Create a DoTe client/server
     ///
     /// \param loop        The looper to use to read
     /// \param forwarders  The forwarder storage
-    Dote(std::shared_ptr<Loop> loop,
-         std::shared_ptr<IForwarders> forwarders);
+    Server(std::shared_ptr<Loop> loop,
+           std::shared_ptr<IForwarders> forwarders);
 
-    Dote(const Dote&) = delete;
-    Dote& operator=(const Dote&) = delete;
+    Server(const Server&) = delete;
+    Server& operator=(const Server&) = delete;
 
     /// \brief  Add a server interface
     ///

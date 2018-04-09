@@ -38,8 +38,8 @@ set(CommonSources
     src/client_forwarders.cpp
     include/loop.h
     src/loop.cpp
-    include/dote.h
-    src/dote.cpp)
+    include/server.h
+    src/server.cpp)
 
 # Set up the sources for the binary
 set(BinarySources
@@ -56,7 +56,7 @@ set(TestSources
     test/test_forwarder_config.cpp
     test/test_client_forwarders.cpp
     test/test_loop.cpp
-    test/test_dote.cpp)
+    test/test_server.cpp)
 
 # Set up the library of the code that can be tested and compiled
 # into the real binary

@@ -1,5 +1,5 @@
 
-#include "dote.h"
+#include "server.h"
 #include "socket.h"
 #include "loop.h"
 #include "forwarder_connection.h"
@@ -13,14 +13,14 @@ namespace dote {
 
 using namespace std::placeholders;
 
-Dote::Dote(std::shared_ptr<Loop> loop,
-           std::shared_ptr<IForwarders> forwarders) :
+Server::Server(std::shared_ptr<Loop> loop,
+               std::shared_ptr<IForwarders> forwarders) :
     m_loop(std::move(loop)),
     m_forwarders(std::move(forwarders)),
     m_serverSockets()
 { }
 
-bool Dote::addServer(const char *ip, unsigned short port)
+bool Server::addServer(const char *ip, unsigned short port)
 {
     auto serverSocket = Socket::bind(ip, port, Socket::Type::UDP);
     if (!serverSocket)
@@ -30,12 +30,12 @@ bool Dote::addServer(const char *ip, unsigned short port)
     m_serverSockets.emplace_back(std::move(serverSocket));
     m_loop->registerRead(
         m_serverSockets.back()->get(),
-        std::bind(&Dote::handleDnsRequest, this, _1)
+        std::bind(&Server::handleDnsRequest, this, _1)
     );
     return true;
 }
 
-void Dote::handleDnsRequest(int handle)
+void Server::handleDnsRequest(int handle)
 {
     char buffer[512];
     sockaddr_storage src_addr;

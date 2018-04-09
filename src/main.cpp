@@ -1,5 +1,5 @@
 
-#include "dote.h"
+#include "server.h"
 #include "loop.h"
 #include "forwarder_config.h"
 #include "client_forwarders.h"
@@ -12,14 +12,14 @@ int main(int argc, char* argv[])
     auto context = std::make_shared<dote::openssl::Context>();
     auto forwarders =
         std::make_shared<dote::ClientForwarders>(loop, config, context);
-    dote::Dote dote(loop, forwarders);
+    dote::Server server(loop, forwarders);
 
-    if (!dote.addServer("127.0.0.1"))
+    if (!server.addServer("127.0.0.1"))
     {
         fprintf(stderr, "Unable to add server 127.0.0.1:53\n");
         return 1;
     }
-    if (!dote.addServer("::1"))
+    if (!server.addServer("::1"))
     {
         fprintf(stderr, "Unable to add server ::1:53\n");
         return 1;
