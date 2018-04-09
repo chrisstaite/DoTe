@@ -4,7 +4,6 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-#include <cstdio>
 #include <memory>
 
 namespace dote {
@@ -16,7 +15,8 @@ std::vector<unsigned char> Base64::decode(const std::string& input)
     size_t maxOutputLength = (inputLength / 4u) * 3u;
 
     std::unique_ptr<BIO, decltype(&BIO_free_all)> bio(
-        BIO_new_mem_buf(input.data(), input.size()), &BIO_free_all
+        BIO_new_mem_buf(const_cast<char*>(input.data()), input.size()),
+        &BIO_free_all
     );
     BIO* b64 = BIO_new(BIO_f_base64());
     if (!b64)
