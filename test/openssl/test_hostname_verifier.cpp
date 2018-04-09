@@ -103,6 +103,20 @@ void TestHostnameVerifier::setCommonName(const std::string &hostname)
     X509_set_subject_name(m_certificate, subjectName);
 }
 
+TEST_F(TestHostnameVerifier, MatchSanNoName)
+{
+    addSanHostname("domain.com");
+    HostnameVerifier verifier(m_certificate);
+    EXPECT_TRUE(verifier.isValid(""));
+}
+
+TEST_F(TestHostnameVerifier, MatchCommonNameNoName)
+{
+    setCommonName("domain.com");
+    HostnameVerifier verifier(m_certificate);
+    EXPECT_TRUE(verifier.isValid(""));
+}
+
 TEST_F(TestHostnameVerifier, MatchSan)
 {
     std::string name("domain.com");

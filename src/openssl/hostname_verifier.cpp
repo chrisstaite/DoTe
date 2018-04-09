@@ -186,8 +186,8 @@ bool HostnameVerifier::isValid(const std::string& hostname)
 {
     if (hostname.empty())
     {
-        // No match for an empty hostname
-        return false;
+        // Empty hostname means no validation
+        return true;
     }
     else if (m_sanNames)
     {
