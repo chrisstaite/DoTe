@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <sys/socket.h>
+
 #include <vector>
 #include <string>
 
@@ -13,23 +15,19 @@ class ConfigParser
     /// \brief  All the details required to connect to a forwarder
     struct Forwarder
     {
-        /// The IP to connect to and forward to
-        std::string ip;
+        /// The IP and port to connect to and forward to
+        sockaddr_storage remote;
         /// The host to verify the certificate common name against
         std::string host;
         /// The base64 encoded SHA-256 hash of the certificate
         std::vector<unsigned char> pin;
-        /// The port to connect to
-        unsigned short port;
     };
 
     /// \brief  The server configuration to listen on
     struct Server
     {
-        /// The IP to bind to
-        std::string ip;
-        /// The port to bind to
-        unsigned short port;
+        /// The IP and port to bind to
+        sockaddr_storage address;
     };
 
     /// \brief  Parse the configuration
@@ -82,11 +80,14 @@ class ConfigParser
     ///  - [::1]:53
     ///  - 127.0.0.1:53
     ///
-    /// \param server  The server to parse
-    /// \param output  The variable to parse into
+    /// \param server       The server to parse
+    /// \param defaultPort  The port to use if not specified
+    /// \param output       The variable to parse into
     ///
     /// \return  True if able to parse, false if invalid format
-    static bool parseServer(const char* server, Server& output);
+    static bool parseServer(const char* server,
+                            unsigned short defaultPort,
+                            sockaddr_storage& output);
 
     /// \brief  Add a pin to the current m_partialForwarder
     ///

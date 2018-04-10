@@ -4,6 +4,7 @@
 #include <memory>
 
 struct sockaddr;
+struct sockaddr_storage;
 
 namespace dote {
 
@@ -28,20 +29,20 @@ class Socket
 
     /// \brief  Construct a new non-blocking socket and connect it to the IP
     ///
-    /// \param ip    The IP address to connect to
-    /// \param port  The port to connect to
-    /// \param type  The type of socket to create
-    static std::shared_ptr<Socket> connect(const char* ip,
-                                           unsigned short port,
+    /// \param address  The address to connect to
+    /// \param type     The type of socket to create
+    ///
+    /// \return  The newly created and connected socket or nullptr
+    static std::shared_ptr<Socket> connect(const sockaddr_storage& address,
                                            Type type);
 
     /// \brief  Context a new non-blocking socket and bind it to the IP
     ///
-    /// \param ip    The IP address to bind to
-    /// \param port  The port to bind to
-    /// \param type  The type of socket to create
-    static std::shared_ptr<Socket> bind(const char* ip,
-                                        unsigned short port,
+    /// \param address  The bind to connect to
+    /// \param type     The type of socket to create
+    ///
+    /// \return  The newly created and bound socket or nullptr
+    static std::shared_ptr<Socket> bind(const sockaddr_storage& address,
                                         Type type);
 
     Socket(const Socket&) = delete;

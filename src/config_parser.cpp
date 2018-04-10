@@ -2,6 +2,7 @@
 #include "config_parser.h"
 #include "openssl/base64.h"
 
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
@@ -22,6 +23,8 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     m_servers(),
     m_ciphers()
 {
+    m_partialForwarder.remote.ss_family = AF_UNSPEC;
+
     parseConfig(argc, argv);
 
     // Add the defaults
@@ -39,8 +42,12 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     }
 }
 
-bool ConfigParser::parseServer(const char *server, Server &output)
+bool ConfigParser::parseServer(const char *server,
+                               unsigned short defaultPort,
+                               sockaddr_storage &output)
 {
+    std::string ip;
+
     if (*server == '[')
     {
         const char* end = strchr(&server[1], ']');
@@ -48,57 +55,81 @@ bool ConfigParser::parseServer(const char *server, Server &output)
         {
             return false;
         }
-        output.ip = std::string{ &server[1], end };
+        output.ss_family = AF_INET6;
+        ip = std::string{ &server[1], end };
         server = &end[1];
     }
     else
     {
         const char* end = strchr(server, ':');
+        output.ss_family = AF_INET;
         if (end)
         {
-            output.ip = std::string{ server, end };
+            ip = std::string{ server, end };
             server = end;
         }
         else
         {
-            output.ip = server;
+            ip = server;
         }
     }
 
+    unsigned short port;
     if (*server == ':')
     {
         char *end;
-        long port = strtol(&server[1], &end, 10);
-        if (*end || port < 1 || port > 65535)
+        long longPort = strtol(&server[1], &end, 10);
+        if (*end || longPort < 1 || longPort > 65535)
         {
             // Invalid port number
             return false;
         }
-        output.port = port;
+        port = longPort;
     }
+    else
+    {
+        port = defaultPort;
+    }
+
+    if (output.ss_family == AF_INET)
+    {
+        auto& ip4 = reinterpret_cast<sockaddr_in&>(output);
+        memset(ip4.sin_zero, 0, sizeof(ip4.sin_zero));
+        ip4.sin_port = htons(port);
+        if (inet_pton(output.ss_family, ip.c_str(), &ip4.sin_addr) != 1)
+        {
+            return false;
+        }
+    }
+    else if (output.ss_family == AF_INET6)
+    {
+        auto& ip6 = reinterpret_cast<sockaddr_in6&>(output);
+        ip6.sin6_port = htons(port);
+        if (inet_pton(output.ss_family, ip.c_str(), &ip6.sin6_addr) != 1)
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 
 void ConfigParser::addServer(const char* server)
 {
-    Server output { "", 0 };
-    if (!parseServer(server, output))
+    Server output { };
+    if (!parseServer(server, 53, output.address))
     {
         m_valid = false;
     }
     else
     {
-        if (output.port == 0)
-        {
-            output.port = 53;
-        }
         m_servers.emplace_back(std::move(output));
     }
 }
 
 void ConfigParser::pushForwarder()
 {
-    if (!m_partialForwarder.ip.empty())
+    if (m_partialForwarder.remote.ss_family != AF_UNSPEC)
     {
         m_forwarders.emplace_back(std::move(m_partialForwarder));
     }
@@ -115,26 +146,14 @@ void ConfigParser::pushForwarder()
 
     // Reset if it's been moved
     m_partialForwarder = Forwarder {};
+    m_partialForwarder.remote.ss_family = AF_UNSPEC;
 }
 
 void ConfigParser::addForwarder(const char* server)
 {
-    Server output { "", 0 };
-    if (!parseServer(server, output))
+    if (!parseServer(server, 853, m_partialForwarder.remote))
     {
         m_valid = false;
-    }
-    else
-    {
-        m_partialForwarder.ip = std::move(output.ip);
-        if (output.port == 0)
-        {
-            m_partialForwarder.port = 853;
-        }
-        else
-        {
-            m_partialForwarder.port = output.port;
-        }
     }
 }
 
@@ -228,24 +247,40 @@ void ConfigParser::defaultForwarders()
     auto pin = openssl::Base64::decode(
         "DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM="
     );
-    m_forwarders.emplace_back(Forwarder {
-        "2606:4700:4700::1111", hostname, pin, 853
-    });
-    m_forwarders.emplace_back(Forwarder {
-        "2606:4700:4700::1001", hostname, pin, 853
-    });
-    m_forwarders.emplace_back(Forwarder {
-        "1.1.1.1", hostname, pin, 853
-    });
-    m_forwarders.emplace_back(Forwarder {
-        "1.0.0.1", hostname, pin, 853
-    });
+    Forwarder a{{}, hostname, pin};
+    if (parseServer("[2606:4700:4700::1111]", 853, a.remote))
+    {
+        m_forwarders.emplace_back(std::move(a));
+    }
+    Forwarder b{{}, hostname, pin};
+    if (parseServer("[2606:4700:4700::1001]", 853, b.remote))
+    {
+        m_forwarders.emplace_back(std::move(b));
+    }
+    Forwarder c{{}, hostname, pin};
+    if (parseServer("1.1.1.1", 853, c.remote))
+    {
+        m_forwarders.emplace_back(std::move(c));
+    }
+    Forwarder d{{}, hostname, pin};
+    if (parseServer("1.0.0.1", 853, d.remote))
+    {
+        m_forwarders.emplace_back(std::move(d));
+    }
 }
 
 void ConfigParser::defaultServers()
 {
-    m_servers.emplace_back(Server { "127.0.0.1", 53 });
-    m_servers.emplace_back(Server { "::1", 53 });
+    Server a{};
+    if (parseServer("127.0.0.1", 53, a.address))
+    {
+        m_servers.push_back(a);
+    }
+    Server b{};
+    if (parseServer("[::1]", 53, b.address))
+    {
+        m_servers.push_back(b);
+    }
 }
 
 }  // namespace dote

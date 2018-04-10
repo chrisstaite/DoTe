@@ -11,7 +11,7 @@ int main(int argc, char* const argv[])
     dote::ConfigParser parser(argc, argv);
     if (!parser.valid())
     {
-        fprintf(stderr, "Usage: %s [-s 127.0.0.1:53] [-f 1.1.1.1:53 [-h cloudflare-dns.com] [-p DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM=]] [-c ALL]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-s 127.0.0.1:53] [-f 1.1.1.1:853 [-h cloudflare-dns.com] [-p DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM=]] [-c ALL]\n", argv[0]);
         return 1;
     }
 
@@ -31,10 +31,7 @@ int main(int argc, char* const argv[])
     {
         if (!server.addServer(serverConfig))
         {
-            fprintf(
-                stderr, "Unable to add server %s:%d\n",
-                serverConfig.ip.c_str(), serverConfig.port
-            );
+            fprintf(stderr, "Unable to bind to server\n");
             return 1;
         }
     }

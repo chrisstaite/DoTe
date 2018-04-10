@@ -31,61 +31,41 @@ int toType(Socket::Type type)
     }
 }
 
-/// \brief  Create a new socket and then call a function on it,
-///         with the correct domain depending on the given IP
+/// \brief  Convert an AF_* to a PF_*
 ///
-/// \param ip    The IP address to call the init function for
-/// \param port  The port to set the sockaddr to
-/// \param type  The type of socket to create
-/// \param init  The function to call after
-std::shared_ptr<Socket> initialise(
-        const char* ip,
-        unsigned short port,
-        Socket::Type type,
-        bool (Socket::*init)(const sockaddr*, size_t))
+/// \param family  The family to convert to a domain
+///
+/// \return  The domain for the given family or -1
+int toDomain(int family)
 {
-    std::shared_ptr<Socket> socket(nullptr);
-
-    struct sockaddr_in ip4addr;
-    struct sockaddr_in6 ip6addr;
-
-    // Try doing IPv4 first
-    if (inet_pton(AF_INET, ip, &ip4addr.sin_addr) == 1)
+    switch (family)
     {
-        ip4addr.sin_family = AF_INET;
-        ip4addr.sin_port = htons(port);
-        memset(ip4addr.sin_zero, 0, sizeof(ip4addr.sin_zero));
-        socket = std::make_shared<Socket>(PF_INET, type);
-        if (!((*socket).*init)(
-                reinterpret_cast<struct sockaddr*>(&ip4addr),
-                sizeof(ip4addr)
-            ))
-        {
-            if (errno != EINPROGRESS)
-            {
-                socket.reset();
-            }
-        }
+        case AF_INET:
+            return PF_INET;
+        case AF_INET6:
+            return PF_INET6;
+        default:
+            return -1;
     }
-    // Try with IPv6 on failure
-    else if (inet_pton(AF_INET6, ip, &ip6addr.sin6_addr) == 1)
-    {
-        ip6addr.sin6_family = AF_INET6;
-        ip6addr.sin6_port = htons(port);
-        socket = std::make_shared<Socket>(PF_INET6, type);
-        if (!((*socket).*init)(
-                reinterpret_cast<struct sockaddr*>(&ip6addr),
-                sizeof(ip6addr)
-            ))
-        {
-            if (errno != EINPROGRESS)
-            {
-                socket.reset();
-            }
-        }
-    }
+}
 
-    return socket;
+/// \brief  Get the length of sockaddr from a family
+///
+/// \param family  The family to get the sockaddr length
+///
+/// \return  The length of the sockaddr for the family or
+///          zero if unknown
+int addressLength(int family)
+{
+    switch (family)
+    {
+        case AF_INET:
+            return sizeof(sockaddr_in);
+        case AF_INET6:
+            return sizeof(sockaddr_in6);
+        default:
+            return 0;
+    }
 }
 
 }  // anon namespace
@@ -123,24 +103,46 @@ void Socket::close()
     }
 }
 
-std::shared_ptr<Socket> Socket::connect(const char *ip,
-                                        unsigned short port,
+std::shared_ptr<Socket> Socket::connect(const sockaddr_storage& address,
                                         Type type)
 {
-    return initialise(ip, port, type, &Socket::connect);
+    auto socket = std::make_shared<Socket>(
+        toDomain(address.ss_family), type
+    );
+    if (socket && !socket->connect(
+                reinterpret_cast<const sockaddr*>(&address),
+                addressLength(address.ss_family)
+            ))
+    {
+        socket.reset();
+    }
+    return socket;
 }
 
-std::shared_ptr<Socket> Socket::bind(const char *ip,
-                                     unsigned short port,
+std::shared_ptr<Socket> Socket::bind(const sockaddr_storage& address,
                                      Type type)
 {
-    return initialise(ip, port, type, &Socket::bind);
+    auto socket = std::make_shared<Socket>(
+        toDomain(address.ss_family), type
+    );
+    if (socket && !socket->bind(
+                reinterpret_cast<const sockaddr*>(&address),
+                addressLength(address.ss_family)
+            ))
+    {
+        socket.reset();
+    }
+    return socket;
 }
 
 bool Socket::connect(const sockaddr* address, size_t addressLength)
 {
-    return m_handle != -1 &&
-        ::connect(m_handle, address, addressLength) == 0;
+    if (m_handle == -1 ||
+            ::connect(m_handle, address, addressLength) != 0)
+    {
+        return (errno == EINPROGRESS);
+    }
+    return true;
 }
 
 bool Socket::bind(const sockaddr* address, size_t addressLength)

@@ -22,9 +22,7 @@ Server::Server(std::shared_ptr<Loop> loop,
 
 bool Server::addServer(const ConfigParser::Server& config)
 {
-    auto serverSocket = Socket::bind(
-        config.ip.c_str(), config.port, Socket::Type::UDP
-    );
+    auto serverSocket = Socket::bind(config.address, Socket::Type::UDP);
     if (!serverSocket)
     {
         return false;

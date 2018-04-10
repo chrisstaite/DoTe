@@ -26,9 +26,7 @@ ForwarderConnection::ForwarderConnection(std::shared_ptr<Loop> loop,
     auto chosen = m_config->get();
     if (chosen != m_config->end())
     {
-        m_socket = Socket::connect(
-            chosen->ip.c_str(), chosen->port, Socket::Type::TCP
-        );
+        m_socket = Socket::connect(chosen->remote, Socket::Type::TCP);
         m_hostname = chosen->host;
         m_pin = chosen->pin;
 
