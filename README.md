@@ -42,9 +42,6 @@ make test
 Run
 ---
 
-Currently there is no configuration system, so if you
-want to change anything you'll have to modify src/main.cpp.
-
 By default DoTe will listen on localhost port 53 and
 forward queries to 1.1.1.1 port 853 with hostname
 verification and certificate pinned.
@@ -52,3 +49,23 @@ verification and certificate pinned.
 ~~~~
 ./dote
 ~~~~
+
+You can also specify different addresses to bind to
+using the -s flag.  For an IPv4 it can be specified
+by `-s 127.0.0.1:53` where the port is optional and
+by default port 53.  An IPv6 address must be wrapped
+with square brackets for example `-s [::1]:53`.
+
+You can change the OpenSSL ciphers that can be used
+from the baked-in defaults using the `-c` flag.  See
+the OpenSSL documentation for information on the
+cipher strings that are available.
+
+Forwarders can be specified using the `-f` flag in
+the same way as the `-s` flag.  By default the
+hostname and certificate is not pinned.  To pin
+them, the flags `-h` and `-p` need to be specified
+after the `-f` flag they are to pin.  The `-h` will
+be the hostname to match agains and the `-p` flag
+is the Base64 encoding of the certificate public
+key.
