@@ -10,7 +10,6 @@
 
 #include <unistd.h>
 #ifdef __linux__
-#include <sys/capability.h>
 #include <sys/prctl.h>
 #endif
 
@@ -36,12 +35,6 @@ void dropPriviledges()
 #ifdef __linux__
     // Don't allow any new priviledges
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-    // Drop capabilities too
-    struct __user_cap_header_struct hdr = { 0 };
-    struct __user_cap_data_struct data = { 0 };
-    hdr.pid = getpid();
-    hdr.version = _LINUX_CAPABILITY_VERSION;
-    capset(&hdr, &data);
 #endif
 }
 
