@@ -7,8 +7,6 @@ struct sockaddr_storage;
 
 namespace dote {
 
-class ForwarderConnection;
-
 /// \brief  An interface for getting a forwarder for a client
 class IForwarders
 {

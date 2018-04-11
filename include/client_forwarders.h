@@ -4,11 +4,13 @@
 #include "i_forwarders.h"
 
 #include <vector>
+#include <memory>
 
 namespace dote {
 
 class Loop;
 class ForwarderConfig;
+class ForwarderConnection;
 
 namespace openssl {
 class Context;

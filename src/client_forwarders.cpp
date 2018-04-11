@@ -1,6 +1,8 @@
 
 #include "client_forwarders.h"
 #include "forwarder_connection.h"
+#include "loop.h"
+#include "forwarder_config.h"
 #include "log.h"
 
 #include <sys/socket.h>

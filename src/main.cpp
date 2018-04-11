@@ -8,6 +8,45 @@
 #include "log.h"
 #include "openssl/context.h"
 
+#include <unistd.h>
+#ifdef __linux__
+#include <sys/capability.h>
+#include <sys/prctl.h>
+#endif
+
+namespace {
+
+void dropPriviledges()
+{
+    // Check if we are running as root
+    if (geteuid() == 0)
+    {
+        uid_t uid = getuid();
+        if (uid == 0)
+        {
+            // Set to nobody because this was run as root
+            setreuid(65534, 65534);
+        }
+        else
+        {
+            // Set to the user it was run as
+            setreuid(uid, uid);
+        }
+    }
+#ifdef __linux__
+    // Don't allow any new priviledges
+    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+    // Drop capabilities too
+    struct __user_cap_header_struct hdr = { 0 };
+    struct __user_cap_data_struct data = { 0 };
+    hdr.pid = getpid();
+    hdr.version = _LINUX_CAPABILITY_VERSION;
+    capset(&hdr, &data);
+#endif
+}
+
+}  // anon namespace
+
 int main(int argc, char* const argv[])
 {
     // Set up the logger
@@ -44,6 +83,9 @@ int main(int argc, char* const argv[])
             return 1;
         }
     }
+
+    // Drop priviledges
+    dropPriviledges();
 
     // Start the event loop
     loop->run();
