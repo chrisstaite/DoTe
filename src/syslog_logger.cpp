@@ -10,7 +10,7 @@ SyslogLogger::SyslogLogger()
     openlog("DoTe", LOG_CONS | LOG_PID, LOG_DAEMON);
 }
 
-SyslogLogger::~SyslogLogger()
+SyslogLogger::~SyslogLogger() noexcept
 {
     closelog();
 }

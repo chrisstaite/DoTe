@@ -18,7 +18,7 @@ class SyslogLogger : public ILogger
     SyslogLogger& operator=(const SyslogLogger&) = delete;
 
     /// \brief  Close the syslog
-    ~SyslogLogger();
+    ~SyslogLogger() noexcept;
     
     /// \brief  Log the item to the syslog
     ///
