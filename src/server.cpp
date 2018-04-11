@@ -38,6 +38,22 @@ bool Server::addServer(const ConfigParser::Server& config)
 
 void Server::handleDnsRequest(int handle)
 {
+    // Get the socket for this handle
+    std::shared_ptr<Socket> handleSocket;
+    for (auto& socket : m_serverSockets)
+    {
+        if (socket->get() == handle)
+        {
+            handleSocket = socket;
+            break;
+        }
+    }
+    if (!handleSocket)
+    {
+        Log::warn << "Request from unknown socket";
+        return;
+    }
+
     char buffer[512];
     sockaddr_storage src_addr;
     iovec iov[1] = {
@@ -67,7 +83,9 @@ void Server::handleDnsRequest(int handle)
     std::copy(buffer, &buffer[count], tcpBuffer.begin() + 2);
 
     // Send the request
-    m_forwarders->handleRequest(handle, src_addr, std::move(tcpBuffer));
+    m_forwarders->handleRequest(
+        std::move(handleSocket), src_addr, std::move(tcpBuffer)
+    );
 }
 
 }  // namespace dote

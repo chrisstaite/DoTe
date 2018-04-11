@@ -4,10 +4,9 @@
 #include "loop.h"
 #include "forwarder_config.h"
 #include "log.h"
+#include "socket.h"
 
-#include <sys/socket.h>
 #include <arpa/inet.h>
-
 #include <functional>
 
 namespace dote {
@@ -26,7 +25,7 @@ ClientForwarders::ClientForwarders(std::shared_ptr<Loop> loop,
 ClientForwarders::~ClientForwarders() noexcept
 { }
 
-void ClientForwarders::handleRequest(int handle,
+void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
                                      const sockaddr_storage client,
                                      std::vector<char> request)
 {
@@ -38,10 +37,10 @@ void ClientForwarders::handleRequest(int handle,
     {
         // On data, handle
         connection->setIncomingCallback(
-            [this, handle, client](ForwarderConnection& connection,
+            [this, socket, client](ForwarderConnection& connection,
                                    std::vector<char> buffer)
             {
-                handleIncoming(handle, client, std::move(buffer));
+                handleIncoming(socket, client, std::move(buffer));
                 // Shutdown after result
                 connection.shutdown();
             }
@@ -68,7 +67,7 @@ void ClientForwarders::handleShutdown(ForwarderConnection& connection)
     }
 }
 
-void ClientForwarders::handleIncoming(int handle,
+void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
                                       const sockaddr_storage& client,
                                       std::vector<char> buffer)
 {
@@ -99,7 +98,7 @@ void ClientForwarders::handleIncoming(int handle,
         const_cast<sockaddr_storage*>(&client),
         clientLength, iov, 1, 0, 0
     };
-    if (sendmsg(handle, &message, 0) == -1)
+    if (sendmsg(socket->get(), &message, 0) == -1)
     {
         Log::warn << "Unable to send response to DNS request";
     }

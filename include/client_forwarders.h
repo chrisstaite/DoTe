@@ -3,9 +3,6 @@
 
 #include "i_forwarders.h"
 
-#include <vector>
-#include <memory>
-
 namespace dote {
 
 class Loop;
@@ -34,20 +31,20 @@ class ClientForwarders : public IForwarders
 
     /// \brief  Handle an incoming request
     ///
-    /// \param handle   The handle to send the response on
+    /// \param socket   The socket to send the response on
     /// \param client   The client to respond to
     /// \param request  The request to forward on
-    void handleRequest(int handle,
+    void handleRequest(std::shared_ptr<Socket> socket,
                        const sockaddr_storage client,
                        std::vector<char> request) override;
 
   private:
     /// \brief  Handle an incoming packet for a given client
     ///
-    /// \param handle  The socket to send the response on
+    /// \param socket  The socket to send the response on
     /// \param client  The client that the response is for
     /// \param buffer  The recieved buffer
-    void handleIncoming(int handle,
+    void handleIncoming(const std::shared_ptr<Socket>& socket,
                         const sockaddr_storage& client,
                         std::vector<char> buffer);
 
