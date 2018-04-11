@@ -1,4 +1,5 @@
 
+#include "log.h"
 #include "openssl/context.h"
 
 #include <openssl/ssl.h>
@@ -36,6 +37,7 @@ Context::Context(const std::string& ciphers) :
         // Set the available ciphers
         if (SSL_CTX_set_cipher_list(m_context, ciphers.c_str()) == 0)
         {
+            Log::err << "Unable to set the OpenSSL cipher list";
             SSL_CTX_free(m_context);
             m_context = nullptr;
         }
@@ -43,6 +45,10 @@ Context::Context(const std::string& ciphers) :
         {
             configureContext();
         }
+    }
+    else
+    {
+        Log::err << "Unable to create OpenSSL context";
     }
 }
 

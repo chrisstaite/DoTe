@@ -4,6 +4,7 @@
 #include "loop.h"
 #include "forwarder_connection.h"
 #include "i_forwarders.h"
+#include "log.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -49,12 +50,12 @@ void Server::handleDnsRequest(int handle)
     ssize_t count = recvmsg(handle, &message, 0);
     if (count == -1)
     {
-        fprintf(stderr, "No message to receive\n");
+        Log::notice << "No message to receive";
         return;
     }
     else if ((message.msg_flags & MSG_TRUNC))
     {
-        fprintf(stderr, "DNS request packet was too big\n");
+        Log::notice << "DNS request packet was too big";
         return;
     }
 

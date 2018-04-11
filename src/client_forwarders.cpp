@@ -1,6 +1,7 @@
 
 #include "client_forwarders.h"
 #include "forwarder_connection.h"
+#include "log.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -66,6 +67,8 @@ std::shared_ptr<ForwarderConnection> ClientForwarders::forwarder(
             if ((*connectionIt)->closed())
             {
                 // Re-open the connection
+                Log::notice << "Connection was closed when in "
+                    << "use, re-opening the connection";
                 *connectionIt = newConnection();
             }
             return *connectionIt;
@@ -79,6 +82,7 @@ std::shared_ptr<ForwarderConnection> ClientForwarders::forwarder(
     m_clients.emplace_back(client);
     m_handles.emplace_back(handle);
     m_connections.emplace_back(newConnection());
+    Log::debug << "Opened a new connection to a forwarder";
 
     return m_connections.back();
 }
@@ -174,7 +178,7 @@ void ClientForwarders::handleIncoming(int handle,
     };
     if (sendmsg(handle, &message, 0) == -1)
     {
-        fprintf(stderr, "Error sending response\n");
+        Log::warn << "Unable to send response to DNS request";
     }
 }
 
