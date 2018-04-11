@@ -72,6 +72,9 @@ set(TestSources
     test/test_config_parser.cpp
     test/test_log.cpp)
 
+# Remove RTTI because we don't need it and it bloats the binary
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+
 # Set up the library of the code that can be tested and compiled
 # into the real binary
 find_package(OpenSSL REQUIRED)

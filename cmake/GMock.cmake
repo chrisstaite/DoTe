@@ -40,13 +40,13 @@ endif ()
 if (CMAKE_GENERATOR MATCHES "Xcode")
     set_target_properties(libgtest PROPERTIES
         IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/gtest/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a"
-        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/gtest/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gtestd.a")
+        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/gtest/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a")
     set_target_properties(libgmock PROPERTIES
         IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a"
-        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gmockd.a")
+        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a")
     set_target_properties(libgmock_main PROPERTIES
         IMPORTED_LOCATION_RELEASE "${binary_dir}/googlemock/Release/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a"
-        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_maind.a")
+        IMPORTED_LOCATION_DEBUG "${binary_dir}/googlemock/Debug/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a")
 else ()
     set_target_properties(libgtest PROPERTIES
         IMPORTED_LOCATION "${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a")
