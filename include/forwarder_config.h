@@ -23,6 +23,11 @@ class ForwarderConfig
     /// \param config  The configuration to add
     void addForwarder(const ConfigParser::Forwarder& config);
 
+    /// \brief  Notify of a failed connection to a given forwarder
+    ///
+    /// \param config  The forwarder that the connection failed for
+    void setBad(const ConfigParser::Forwarder& config);
+
     /// \brief  Get the configuration to use, must check against
     ///         end() before using it
     ///

@@ -67,6 +67,8 @@ set(TestSources
     test/test_client_forwarders.cpp
     test/test_loop.cpp
     test/test_server.cpp
+    test/parse_inet.h
+    test/parse_inet.cpp
     test/test_config_parser.cpp
     test/test_log.cpp)
 

@@ -3,6 +3,7 @@
 #include "loop.h"
 #include "forwarder_config.h"
 #include "socket.h"
+#include "log.h"
 
 namespace dote {
 
@@ -95,10 +96,14 @@ void ForwarderConnection::connect(int handle)
             }
             else
             {
+                Log::notice << "Bad hostname or certificate for forwarder";
+                m_config->setBad(m_forwarder);
                 shutdown();
             }
             break;
         case openssl::SslConnection::Result::FATAL:
+            Log::notice << "Error handshaking with forwarder";
+            m_config->setBad(m_forwarder);
             m_state = State::CLOSED;
             m_loop->removeException(handle);
             m_socket.reset();
@@ -124,6 +129,8 @@ void ForwarderConnection::incoming(int handle)
             }
             break;
         case openssl::SslConnection::Result::FATAL:
+            Log::notice << "Error reading from forwarder";
+            m_config->setBad(m_forwarder);
             close();
             break;
     }
@@ -210,6 +217,8 @@ void ForwarderConnection::outgoing(int handle)
             }
             break;
         case openssl::SslConnection::Result::FATAL:
+            Log::notice << "Error writing to forwarder";
+            m_config->setBad(m_forwarder);
             close();
             break;
     }
@@ -217,6 +226,11 @@ void ForwarderConnection::outgoing(int handle)
 
 void ForwarderConnection::exception(int handle)
 {
+    if (m_state == State::CONNECTING)
+    {
+        Log::notice << "Issue connecting to forwarder";
+        m_config->setBad(m_forwarder);
+    }
     close();
 }
 
