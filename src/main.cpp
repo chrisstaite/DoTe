@@ -33,8 +33,10 @@ void dropPriviledges()
         }
     }
 #ifdef __linux__
+#ifdef PR_SET_NO_NEW_PRIVS
     // Don't allow any new priviledges
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+#endif
 #endif
 }
 
