@@ -137,8 +137,11 @@ std::shared_ptr<Socket> Socket::bind(const sockaddr_storage& address,
 
 bool Socket::connect(const sockaddr* address, size_t addressLength)
 {
-    if (m_handle == -1 ||
-            ::connect(m_handle, address, addressLength) != 0)
+    if (m_handle == -1)
+    {
+        return false;
+    }
+    if (::connect(m_handle, address, addressLength) != 0)
     {
         return (errno == EINPROGRESS);
     }

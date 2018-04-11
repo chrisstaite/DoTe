@@ -49,7 +49,7 @@ SslConnection::~SslConnection()
 
 void SslConnection::setSocket(int handle)
 {
-    if (m_ssl && handle >= 0)
+    if (m_ssl && handle > 0)
     {
         SSL_set_fd(m_ssl, handle);
     }
