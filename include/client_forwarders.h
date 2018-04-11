@@ -30,41 +30,29 @@ class ClientForwarders : public IForwarders
     /// \brief  Destroy the forwarders
     ~ClientForwarders() noexcept;
 
-    /// \brief  Get the forwarder for the given client
+    /// \brief  Handle an incoming request
     ///
-    /// \param handle  The handle to send the response on
-    /// \param client  The client to get the forwarder for
-    ///
-    /// \return  The forwarder for the given client
-    std::shared_ptr<ForwarderConnection> forwarder(
-            int handle, sockaddr_storage& client) override;
+    /// \param handle   The handle to send the response on
+    /// \param client   The client to respond to
+    /// \param request  The request to forward on
+    void handleRequest(int handle,
+                       const sockaddr_storage client,
+                       std::vector<char> request) override;
 
   private:
-    /// \brief  Handle an incoming packet on a given connection
-    ///
-    /// \param connection  The connection that recieved the buffer
-    /// \param buffer      The recieved buffer on the connection
-    void incoming(ForwarderConnection& connection,
-                  std::vector<char> buffer);
-
-    /// \brief  Handle a connection shutting down
-    ///
-    /// \param connection  The connection that has shutdown
-    void shutdown(ForwarderConnection& connection);
-
     /// \brief  Handle an incoming packet for a given client
     ///
     /// \param handle  The socket to send the response on
     /// \param client  The client that the response is for
     /// \param buffer  The recieved buffer
     void handleIncoming(int handle,
-                        sockaddr_storage& client,
+                        const sockaddr_storage& client,
                         std::vector<char> buffer);
 
-    /// \brief  Create a new connection
+    /// \brief  Handle the shutdown of a client
     ///
-    /// \return  The newly created forwarder connection
-    std::shared_ptr<ForwarderConnection> newConnection();
+    /// \param connection  The connection that has shutdown
+    void handleShutdown(ForwarderConnection& connection);
 
     /// The looper to use to manage sockets
     std::shared_ptr<Loop> m_loop;
@@ -72,12 +60,8 @@ class ClientForwarders : public IForwarders
     std::shared_ptr<ForwarderConfig> m_config;
     /// The OpenSSL context to use
     std::shared_ptr<openssl::Context> m_context;
-    /// The clients for each of the connections in m_connections
-    std::vector<sockaddr_storage> m_clients;
-    /// The sockets to send responses from
-    std::vector<int> m_handles;
-    /// The current connections
-    std::vector<std::shared_ptr<ForwarderConnection>> m_connections;
+    /// The currently open connections to forwarders
+    std::vector<std::shared_ptr<ForwarderConnection>> m_forwarders;
 };
 
 }  // namespace dote

@@ -59,9 +59,6 @@ void Server::handleDnsRequest(int handle)
         return;
     }
 
-    // Get a forwarder for this client
-    auto forwarder = m_forwarders->forwarder(handle, src_addr);
-
     // Construct a TCP DNS request which is two bytes of length
     // followed by the DNS request packet
     std::vector<char> tcpBuffer;
@@ -70,7 +67,7 @@ void Server::handleDnsRequest(int handle)
     std::copy(buffer, &buffer[count], tcpBuffer.begin() + 2);
 
     // Send the request
-    forwarder->send(std::move(tcpBuffer));
+    m_forwarders->handleRequest(handle, src_addr, std::move(tcpBuffer));
 }
 
 }  // namespace dote

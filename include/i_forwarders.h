@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <memory>
+#include <vector>
 
 struct sockaddr_storage;
 
@@ -15,14 +15,14 @@ class IForwarders
   public:
     virtual ~IForwarders() = default;
 
-    /// \brief  Get the forwarder for the given client
+    /// \brief  Handle an incoming request
     ///
-    /// \param handle  The handle to send the response on
-    /// \param client  The client to get the forwarder for
-    ///
-    /// \return  The forwarder for the given client
-    virtual std::shared_ptr<ForwarderConnection> forwarder(
-            int handle, sockaddr_storage& client) = 0;
+    /// \param handle   The handle to send the response on
+    /// \param client   The client to respond to
+    /// \param request  The request to forward on
+    virtual void handleRequest(int handle,
+                               const sockaddr_storage client,
+                               std::vector<char> request) = 0;
 };
 
 }  // namespace dote

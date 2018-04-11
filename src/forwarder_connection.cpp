@@ -11,17 +11,15 @@ using namespace std::placeholders;
 
 ForwarderConnection::ForwarderConnection(std::shared_ptr<Loop> loop,
                                          std::shared_ptr<ForwarderConfig> config,
-                                         IncomingCallback incoming,
-                                         ShutdownCallback shutdown,
                                          std::shared_ptr<openssl::Context> context) :
     m_loop(std::move(loop)),
     m_config(std::move(config)),
-    m_incoming(std::move(incoming)),
-    m_shutdown(std::move(shutdown)),
     m_connection(std::move(context)),
+    m_incoming(),
+    m_shutdown(),
     m_state(CONNECTING),
     m_socket(nullptr),
-    m_buffers(),
+    m_buffer(),
     m_forwarder()
 {
     auto chosen = m_config->get();
@@ -39,12 +37,30 @@ ForwarderConnection::ForwarderConnection(std::shared_ptr<Loop> loop,
             );
             connect(m_socket->get());
         }
+        else
+        {
+            m_state = CLOSED;
+        }
+    }
+    else
+    {
+        m_state = CLOSED;
     }
 }
 
 ForwarderConnection::~ForwarderConnection()
 {
     close();
+}
+
+void ForwarderConnection::setIncomingCallback(IncomingCallback incoming)
+{
+    m_incoming = std::move(incoming);
+}
+
+void ForwarderConnection::setShutdownCallback(ShutdownCallback shutdown)
+{
+    m_shutdown = std::move(shutdown);
 }
 
 bool ForwarderConnection::closed()
@@ -85,7 +101,7 @@ void ForwarderConnection::connect(int handle)
                     m_socket->get(),
                     std::bind(&ForwarderConnection::incoming, this, _1)
                 );
-                if (!m_buffers.empty())
+                if (!m_buffer.empty())
                 {
                     m_loop->registerWrite(
                         m_socket->get(),
@@ -107,6 +123,10 @@ void ForwarderConnection::connect(int handle)
             m_state = State::CLOSED;
             m_loop->removeException(handle);
             m_socket.reset();
+            if (m_shutdown)
+            {
+                m_shutdown(*this);
+            }
             break;
     }
 }
@@ -125,7 +145,10 @@ void ForwarderConnection::incoming(int handle)
         case openssl::SslConnection::Result::SUCCESS:
             if (!buffer.empty())
             {
-                m_incoming(*this, std::move(buffer));
+                if (m_incoming)
+                {
+                    m_incoming(*this, std::move(buffer));
+                }
             }
             break;
         case openssl::SslConnection::Result::FATAL:
@@ -171,6 +194,10 @@ void ForwarderConnection::_shutdown(int handle)
             m_state = State::CLOSED;
             m_loop->removeException(handle);
             m_socket.reset();
+            if (m_shutdown)
+            {
+                m_shutdown(*this);
+            }
             break;
     }
 }
@@ -182,26 +209,23 @@ bool ForwarderConnection::send(std::vector<char> buffer)
         return false;
     }
 
-    if (m_buffers.empty())
+    if (m_buffer.empty())
     {
         m_loop->registerWrite(
             m_socket->get(),
             std::bind(&ForwarderConnection::outgoing, this, _1)
         );
-        m_buffers.emplace_back(std::move(buffer));
+        m_buffer = std::move(buffer);
         outgoing(m_socket->get());
-    }
-    else
-    {
-        m_buffers.emplace_back(std::move(buffer));
+        return true;
     }
 
-    return (m_state == State::OPEN);
+    return false;
 }
 
 void ForwarderConnection::outgoing(int handle)
 {
-    switch (m_connection.write(m_buffers.front()))
+    switch (m_connection.write(m_buffer))
     {
         case openssl::SslConnection::Result::NEED_READ:
             // Probably fine to ignore like the incoming
@@ -210,11 +234,8 @@ void ForwarderConnection::outgoing(int handle)
             // Nothing required to do, we're always the write handler
             break;
         case openssl::SslConnection::Result::SUCCESS:
-            m_buffers.pop_front();
-            if (m_buffers.empty())
-            {
-                m_loop->removeWrite(handle);
-            }
+            m_buffer.clear();
+            m_loop->removeWrite(handle);
             break;
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error writing to forwarder";
@@ -245,7 +266,10 @@ void ForwarderConnection::close()
         m_state = State::CLOSED;
         m_socket.reset();
 
-        m_shutdown(*this);
+        if (m_shutdown)
+        {
+            m_shutdown(*this);
+        }
     }
 }
 

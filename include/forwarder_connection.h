@@ -38,13 +38,9 @@ class ForwarderConnection
     ///
     /// \param loop      The looper to manage the connection
     /// \param config    The configuration for the possible forwarders
-    /// \param incoming  The function to call when incoming data arrives
-    /// \param shutdown  The callback to call on socket shutdown
     /// \param context   The OpenSSL context to communicate with
     ForwarderConnection(std::shared_ptr<Loop> loop,
                         std::shared_ptr<ForwarderConfig> config,
-                        IncomingCallback incoming,
-                        ShutdownCallback shutdown,
                         std::shared_ptr<openssl::Context> context);
 
     ForwarderConnection(const ForwarderConnection&) = delete;
@@ -52,6 +48,16 @@ class ForwarderConnection
 
     /// \brief  Clean up the connection
     ~ForwarderConnection();
+
+    /// \brief  Set the callback for incoming packets
+    ///
+    /// \param incoming  The function to call when incoming data arrives
+    void setIncomingCallback(IncomingCallback incoming);
+
+    /// \brief  Set the callback for if the socket is shutdown
+    ///
+    /// \param shutdown  The callback to call on socket shutdown
+    void setShutdownCallback(ShutdownCallback shutdown);
 
     /// \brief  Check if the socket is closed
     ///
@@ -120,18 +126,18 @@ class ForwarderConnection
     std::shared_ptr<Loop> m_loop;
     /// The configuration for the available forwarders
     std::shared_ptr<ForwarderConfig> m_config;
+    /// The underlying OpenSSL connection
+    openssl::SslConnection m_connection;
     /// A function to handle incoming data on the socket
     IncomingCallback m_incoming;
     /// A function to call when the socket is closed
     ShutdownCallback m_shutdown;
-    /// The underlying OpenSSL connection
-    openssl::SslConnection m_connection;
     /// The state of the connection
     State m_state;
     /// The established connection to the forwarder
     std::shared_ptr<Socket> m_socket;
-    /// A queue of pending write buffers
-    std::deque<std::vector<char>> m_buffers;
+    /// The write buffer, the request will be a single message
+    std::vector<char> m_buffer;
     /// The chosen forwarder that this is connected to
     ConfigParser::Forwarder m_forwarder;
 };

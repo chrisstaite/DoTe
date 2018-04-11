@@ -7,36 +7,8 @@
 #include <arpa/inet.h>
 
 #include <functional>
-#include <cstring>
 
 namespace dote {
-
-namespace {
-
-/// \brief  Compare two client addresses for equality
-///
-/// \param client1  The first address
-/// \param client2  The second address
-///
-/// \return  True if the addresses are the same
-bool isClient(const sockaddr_storage& client1, const sockaddr_storage& client2)
-{
-    if (client1.ss_family != client2.ss_family)
-    {
-        return false;
-    }
-    switch (client1.ss_family)
-    {
-        case AF_INET:
-            return memcmp(&client1, &client2, sizeof(sockaddr_in)) == 0;
-        case AF_INET6:
-            return memcmp(&client1, &client2, sizeof(sockaddr_in6)) == 0;
-        default:
-            return memcmp(&client1, &client2, sizeof(sockaddr_storage)) == 0;
-    }
-}
-
-}  // anon namespace
 
 using namespace std::placeholders;
 
@@ -46,110 +18,58 @@ ClientForwarders::ClientForwarders(std::shared_ptr<Loop> loop,
     m_loop(std::move(loop)),
     m_config(std::move(config)),
     m_context(std::move(context)),
-    m_clients(),
-    m_handles(),
-    m_connections()
+    m_forwarders()
 { }
 
 ClientForwarders::~ClientForwarders() noexcept
 { }
 
-std::shared_ptr<ForwarderConnection> ClientForwarders::forwarder(
-        int handle, sockaddr_storage& client)
+void ClientForwarders::handleRequest(int handle,
+                                     const sockaddr_storage client,
+                                     std::vector<char> request)
 {
-    auto clientIt = m_clients.begin();
-    auto handleIt = m_handles.begin();
-    auto connectionIt = m_connections.begin();
-    while (clientIt != m_clients.end())
-    {
-        if (isClient(*clientIt, client))
-        {
-            if ((*connectionIt)->closed())
-            {
-                // Re-open the connection
-                Log::notice << "Connection was closed when in "
-                    << "use, re-opening the connection";
-                *connectionIt = newConnection();
-            }
-            return *connectionIt;
-        }
-        ++clientIt;
-        ++handleIt;
-        ++connectionIt;
-    }
-
-    // New connection
-    m_clients.emplace_back(client);
-    m_handles.emplace_back(handle);
-    m_connections.emplace_back(newConnection());
-    Log::debug << "Opened a new connection to a forwarder";
-
-    return m_connections.back();
-}
-
-std::shared_ptr<ForwarderConnection> ClientForwarders::newConnection()
-{
-    return std::make_shared<ForwarderConnection>(
-        m_loop,
-        m_config,
-        std::bind(&ClientForwarders::incoming, this, _1, _2),
-        std::bind(&ClientForwarders::shutdown, this, _1),
-        m_context
+    auto connection = std::make_shared<ForwarderConnection>(
+        m_loop, m_config, m_context
     );
-}
-
-void ClientForwarders::shutdown(ForwarderConnection& connection)
-{
-    auto clientIt = m_clients.begin();
-    auto handleIt = m_handles.begin();
-    auto connectionIt = m_connections.begin();
-    while (connectionIt != m_connections.end())
+    // Send the request
+    if (connection->send(request))
     {
-        if (connectionIt->get() == &connection)
-        {
-            // This is the connection that has shutdown
-            m_clients.erase(clientIt);
-            m_handles.erase(handleIt);
-            m_connections.erase(connectionIt);
-            break;
-        }
-        ++clientIt;
-        ++handleIt;
-        ++connectionIt;
+        // On data, handle
+        connection->setIncomingCallback(
+            [this, handle, client](ForwarderConnection& connection,
+                                   std::vector<char> buffer)
+            {
+                handleIncoming(handle, client, std::move(buffer));
+                // Shutdown after result
+                connection.shutdown();
+            }
+        );
+        // On shutdown, remove the client
+        connection->setShutdownCallback(
+            std::bind(&ClientForwarders::handleShutdown, this, _1)
+        );
+
+        // Save off the pointer
+        m_forwarders.emplace_back(std::move(connection));
     }
 }
 
-void ClientForwarders::incoming(ForwarderConnection& connection,
-                                std::vector<char> buffer)
+void ClientForwarders::handleShutdown(ForwarderConnection& connection)
 {
-    auto clientIt = m_clients.begin();
-    auto handleIt = m_handles.begin();
-    auto connectionIt = m_connections.begin();
-    while (connectionIt != m_connections.end())
+    for (auto it = m_forwarders.begin(); it != m_forwarders.end(); ++it)
     {
-        if (connectionIt->get() == &connection)
+        if (it->get() == &connection)
         {
-            // This is the connection to return the result to
-            handleIncoming(*handleIt, *clientIt, std::move(buffer));
-            if ((*connectionIt)->closed())
-            {
-                m_clients.erase(clientIt);
-                m_handles.erase(handleIt);
-                m_connections.erase(connectionIt);
-            }
+            m_forwarders.erase(it);
             break;
         }
-        ++clientIt;
-        ++handleIt;
-        ++connectionIt;
     }
 }
 
 void ClientForwarders::handleIncoming(int handle,
-                                      sockaddr_storage& client,
+                                      const sockaddr_storage& client,
                                       std::vector<char> buffer)
 {
-    // TODO: Support caching of partial results
     if (buffer.size() < 2)
     {
         return;
@@ -174,7 +94,8 @@ void ClientForwarders::handleIncoming(int handle,
         clientLength = sizeof(sockaddr_in6);
     }
     struct msghdr message {
-        &client, clientLength, iov, 1, 0, 0
+        const_cast<sockaddr_storage*>(&client),
+        clientLength, iov, 1, 0, 0
     };
     if (sendmsg(handle, &message, 0) == -1)
     {
