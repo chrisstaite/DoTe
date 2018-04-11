@@ -178,9 +178,18 @@ TEST_F(TestConfigParser, OneServerBadPort)
     EXPECT_FALSE(parser.valid());
 }
 
-TEST_F(TestConfigParser, OneServerInvalidPort)
+TEST_F(TestConfigParser, OneServerInvalidPortHigh)
 {
     const char* const args[] = { "", "-s", "127.0.0.1:65536" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, OneServerInvalidPortLow)
+{
+    const char* const args[] = { "", "-s", "127.0.0.1:0" };
     ConfigParser parser(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
@@ -198,6 +207,33 @@ TEST_F(TestConfigParser, OneServerIPv6DefaultPort)
     );
     EXPECT_TRUE(parser.valid());
     EXPECT_EQ(expected, parser.servers());
+}
+
+TEST_F(TestConfigParser, MissingEndBracket)
+{
+    const char* const args[] = { "", "-s", "[::1" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, Ipv6WithoutBrackets)
+{
+    const char* const args[] = { "", "-s", "::1" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, Ipv4WithBrackets)
+{
+    const char* const args[] = { "", "-s", "[127.0.0.1]" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
 }
 
 TEST_F(TestConfigParser, OneServerIPv6)
