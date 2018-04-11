@@ -41,7 +41,15 @@ set(CommonSources
     include/server.h
     src/server.cpp
     include/config_parser.h
-    src/config_parser.cpp)
+    src/config_parser.cpp
+    include/log.h
+    src/log.cpp
+    include/noop_log.h
+    include/stream_log.h
+    src/stream_log.cpp
+    include/i_logger.h
+    include/syslog_logger.h
+    src/syslog_logger.cpp)
 
 # Set up the sources for the binary
 set(BinarySources
@@ -59,7 +67,8 @@ set(TestSources
     test/test_client_forwarders.cpp
     test/test_loop.cpp
     test/test_server.cpp
-    test/test_config_parser.cpp)
+    test/test_config_parser.cpp
+    test/test_log.cpp)
 
 # Set up the library of the code that can be tested and compiled
 # into the real binary

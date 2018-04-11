@@ -4,10 +4,16 @@
 #include "loop.h"
 #include "forwarder_config.h"
 #include "client_forwarders.h"
+#include "syslog_logger.h"
+#include "log.h"
 #include "openssl/context.h"
 
 int main(int argc, char* const argv[])
 {
+    // Set up the logger
+    dote::Log::setLogger(std::make_shared<dote::SyslogLogger>());
+
+    // Parse the configuration from the command line
     dote::ConfigParser parser(argc, argv);
     if (!parser.valid())
     {
@@ -15,10 +21,12 @@ int main(int argc, char* const argv[])
         return 1;
     }
 
+    // Configure the context
     auto loop = std::make_shared<dote::Loop>();
     auto config = std::make_shared<dote::ForwarderConfig>();
     auto context = std::make_shared<dote::openssl::Context>(parser.ciphers());
 
+    // Configure the forwarders
     auto forwarders =
         std::make_shared<dote::ClientForwarders>(loop, config, context);
     for (const auto& forwarderConfig : parser.forwarders())
@@ -26,6 +34,7 @@ int main(int argc, char* const argv[])
         config->addForwarder(forwarderConfig);
     }
 
+    // Configure the server
     dote::Server server(loop, forwarders);
     for (const auto& serverConfig : parser.servers())
     {
@@ -36,6 +45,7 @@ int main(int argc, char* const argv[])
         }
     }
 
+    // Start the event loop
     loop->run();
 
     return 0;
