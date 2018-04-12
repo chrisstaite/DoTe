@@ -4,6 +4,7 @@
 #include <string>
 
 typedef struct ssl_ctx_st SSL_CTX;
+typedef struct ssl_session_st SSL_SESSION;
 
 namespace dote {
 namespace openssl {
@@ -31,6 +32,16 @@ class Context {
     /// \return  The raw context
     SSL_CTX* get();
 
+    /// \brief  Cache the session, overwriting any existing one
+    ///
+    /// \param session  The session to cache
+    void cacheSession(SSL_SESSION* session);
+
+    /// \brief  Get the cached session
+    ///
+    /// \return  The cached session or nullptr if none
+    SSL_SESSION* getSession();
+
     /// Allow the connection access to the raw context
     friend class SslConnection;
 
@@ -41,6 +52,8 @@ class Context {
 
     /// The wrapped context
     SSL_CTX* m_context;
+    /// The client session that we could re-use
+    SSL_SESSION* m_session;
 };
 
 }  // namespace openssl

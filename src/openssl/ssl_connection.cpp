@@ -22,6 +22,11 @@ SslConnection::SslConnection(std::shared_ptr<Context> context) :
     if (m_context && m_context->get())
     {
         m_ssl = SSL_new(m_context->get());
+        SSL_SESSION* session = m_context->getSession();
+        if (session)
+        {
+            SSL_set_session(m_ssl, session);
+        }
     }
 }
 
@@ -130,7 +135,21 @@ SslConnection::Result SslConnection::doFunction(std::function<int(SSL*)> functio
 
 SslConnection::Result SslConnection::connect()
 {
-    return doFunction(&SSL_connect);
+    Result result = doFunction(&SSL_connect);
+    if (result == Result::SUCCESS)
+    {
+        SSL_SESSION* session = SSL_get1_session(m_ssl);
+        if (session)
+        {
+            m_context->cacheSession(session);
+        }
+    }
+    else if (result == Result::FATAL)
+    {
+        // Going to change servers, invalidate the session
+        m_context->cacheSession(nullptr);
+    }
+    return result;
 }
 
 SslConnection::Result SslConnection::shutdown()

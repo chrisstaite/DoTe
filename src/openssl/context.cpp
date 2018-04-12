@@ -8,7 +8,8 @@ namespace dote {
 namespace openssl {
 
 Context::Context(const std::string& ciphers) :
-    m_context(nullptr)
+    m_context(nullptr),
+    m_session(nullptr)
 {
     // Flag to track if we've tried initialising the OpenSSL
     // library yet because we shouldn't keep trying
@@ -52,6 +53,34 @@ Context::Context(const std::string& ciphers) :
     }
 }
 
+Context::~Context()
+{
+    cacheSession(nullptr);
+    if (m_context)
+    {
+        SSL_CTX_free(m_context);
+    }
+}
+
+void Context::cacheSession(SSL_SESSION* session)
+{
+    if (session == m_session)
+    {
+        return;
+    }
+
+    if (m_session)
+    {
+        SSL_SESSION_free(m_session);
+    }
+    m_session = session;
+}
+
+SSL_SESSION* Context::getSession()
+{
+    return m_session;
+}
+
 void Context::configureContext()
 {
     // Disable SSL v2 and v3 so we only use TLS
@@ -66,19 +95,14 @@ void Context::configureContext()
     SSL_CTX_set_verify(
         m_context, SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr
     );
+
+    // Cache the client sessions
+    SSL_CTX_set_session_cache_mode(m_context, SSL_SESS_CACHE_CLIENT);
 }
 
 SSL_CTX* Context::get()
 {
     return m_context;
-}
-
-Context::~Context()
-{
-    if (m_context)
-    {
-        SSL_CTX_free(m_context);
-    }
 }
 
 }  // namespace openssl
