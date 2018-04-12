@@ -95,9 +95,6 @@ void Context::configureContext()
     SSL_CTX_set_verify(
         m_context, SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr
     );
-
-    // Cache the client sessions
-    SSL_CTX_set_session_cache_mode(m_context, SSL_SESS_CACHE_CLIENT);
 }
 
 SSL_CTX* Context::get()
