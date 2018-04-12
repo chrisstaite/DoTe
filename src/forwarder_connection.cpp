@@ -211,12 +211,14 @@ bool ForwarderConnection::send(std::vector<char> buffer)
 
     if (m_buffer.empty())
     {
-        m_loop->registerWrite(
-            m_socket->get(),
-            std::bind(&ForwarderConnection::outgoing, this, _1)
-        );
+        if (m_state == State::OPEN)
+        {
+            m_loop->registerWrite(
+                m_socket->get(),
+                std::bind(&ForwarderConnection::outgoing, this, _1)
+            );
+        }
         m_buffer = std::move(buffer);
-        outgoing(m_socket->get());
         return true;
     }
 

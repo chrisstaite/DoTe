@@ -19,15 +19,32 @@ ClientForwarders::ClientForwarders(std::shared_ptr<Loop> loop,
     m_loop(std::move(loop)),
     m_config(std::move(config)),
     m_context(std::move(context)),
-    m_forwarders()
+    m_forwarders(),
+    m_queue()
 { }
 
 ClientForwarders::~ClientForwarders() noexcept
 { }
 
 void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
-                                     const sockaddr_storage client,
+                                     const sockaddr_storage& client,
                                      std::vector<char> request)
+{
+    if (m_forwarders.size() < MAX_QUERIES)
+    {
+        sendRequest(std::move(socket), client, std::move(request));
+    }
+    else
+    {
+        m_queue.emplace_back(QueuedQuery {
+            std::move(socket), client, std::move(request)
+        });
+    }
+}
+
+void ClientForwarders::sendRequest(std::shared_ptr<Socket> socket,
+                                   const sockaddr_storage& client,
+                                   std::vector<char> request)
 {
     auto connection = std::make_shared<ForwarderConnection>(
         m_loop, m_config, m_context
@@ -36,11 +53,12 @@ void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
     if (connection->send(request))
     {
         // On data, handle
+        sockaddr_storage clientCopy = client;
         connection->setIncomingCallback(
-            [this, socket, client](ForwarderConnection& connection,
-                                   std::vector<char> buffer)
+            [this, socket, clientCopy](ForwarderConnection& connection,
+                                       std::vector<char> buffer)
             {
-                handleIncoming(socket, client, std::move(buffer));
+                handleIncoming(socket, clientCopy, std::move(buffer));
                 // Shutdown after result
                 connection.shutdown();
             }
@@ -52,6 +70,24 @@ void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
 
         // Save off the pointer
         m_forwarders.emplace_back(std::move(connection));
+    }
+    else
+    {
+        dequeue();
+    }
+}
+
+void ClientForwarders::dequeue()
+{
+    if (!m_queue.empty())
+    {
+        auto& front = m_queue.front();
+        sendRequest(
+            std::move(front.socket),
+            front.client,
+            std::move(front.request)
+        );
+        m_queue.pop_front();
     }
 }
 
@@ -65,6 +101,7 @@ void ClientForwarders::handleShutdown(ForwarderConnection& connection)
             break;
         }
     }
+    dequeue();
 }
 
 void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
@@ -102,6 +139,8 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
     {
         Log::warn << "Unable to send response to DNS request";
     }
+
+    return;
 }
 
 }  // namespace dote

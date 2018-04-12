@@ -22,7 +22,7 @@ class IForwarders
     /// \param client   The client to respond to
     /// \param request  The request to forward on
     virtual void handleRequest(std::shared_ptr<Socket> socket,
-                               const sockaddr_storage client,
+                               const sockaddr_storage& client,
                                std::vector<char> request) = 0;
 };
 

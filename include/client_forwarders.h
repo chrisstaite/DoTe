@@ -3,6 +3,9 @@
 
 #include "i_forwarders.h"
 
+#include <sys/socket.h>
+#include <deque>
+
 namespace dote {
 
 class Loop;
@@ -35,10 +38,34 @@ class ClientForwarders : public IForwarders
     /// \param client   The client to respond to
     /// \param request  The request to forward on
     void handleRequest(std::shared_ptr<Socket> socket,
-                       const sockaddr_storage client,
+                       const sockaddr_storage& client,
                        std::vector<char> request) override;
 
   private:
+    /// The maximum number of outstanding queries at a time
+    static constexpr std::size_t MAX_QUERIES = 10u;
+
+    /// \brief  The details of an incoming query that will be
+    ///         sent when there's space left
+    struct QueuedQuery
+    {
+        /// The socket to send the reply on
+        std::shared_ptr<Socket> socket;
+        /// The client to send the reply to
+        sockaddr_storage client;
+        /// The request to send
+        std::vector<char> request;
+    };
+
+    /// \brief  Send a request
+    ///
+    /// \param socket   The socket to send the response on
+    /// \param client   The client to respond to
+    /// \param request  The request to forward on
+    void sendRequest(std::shared_ptr<Socket> socket,
+                     const sockaddr_storage& client,
+                     std::vector<char> request);
+
     /// \brief  Handle an incoming packet for a given client
     ///
     /// \param socket  The socket to send the response on
@@ -47,6 +74,9 @@ class ClientForwarders : public IForwarders
     void handleIncoming(const std::shared_ptr<Socket>& socket,
                         const sockaddr_storage& client,
                         std::vector<char> buffer);
+
+    /// \brief  Send a request from the front of the queue
+    void dequeue();
 
     /// \brief  Handle the shutdown of a client
     ///
@@ -61,6 +91,8 @@ class ClientForwarders : public IForwarders
     std::shared_ptr<openssl::Context> m_context;
     /// The currently open connections to forwarders
     std::vector<std::shared_ptr<ForwarderConnection>> m_forwarders;
+    /// A queue of requests that will be sent when there's room
+    std::deque<QueuedQuery> m_queue;
 };
 
 }  // namespace dote
