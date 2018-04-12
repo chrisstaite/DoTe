@@ -9,12 +9,25 @@
 #include "openssl/context.h"
 
 #include <unistd.h>
+#include <signal.h>
 #ifdef __linux__
 #include <sys/prctl.h>
 #endif
 
 namespace {
 
+/// The server instance to kill on a signal
+std::shared_ptr<dote::Server> g_server;
+
+/// \brief  The signal handler that is called when the
+///         server should be shutdown
+void shutdownHandler(int)
+{
+    dote::Log::info << "Shutdown signal received";
+    g_server.reset();
+}
+
+/// \brief  Drop any root priviledges if we have them
 void dropPriviledges()
 {
     // Check if we are running as root
@@ -69,10 +82,10 @@ int main(int argc, char* const argv[])
     }
 
     // Configure the server
-    dote::Server server(loop, forwarders);
+    g_server = std::make_shared<dote::Server>(loop, forwarders);
     for (const auto& serverConfig : parser.servers())
     {
-        if (!server.addServer(serverConfig))
+        if (!g_server->addServer(serverConfig))
         {
             fprintf(stderr, "Unable to bind to server\n");
             return 1;
@@ -81,6 +94,9 @@ int main(int argc, char* const argv[])
 
     // Drop priviledges
     dropPriviledges();
+
+    // Listen for kill signals to shutdown the server
+    (void) signal(SIGINT, &shutdownHandler);
 
     // Start the event loop
     loop->run();

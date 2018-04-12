@@ -21,6 +21,14 @@ Server::Server(std::shared_ptr<Loop> loop,
     m_serverSockets()
 { }
 
+Server::~Server()
+{
+    for (auto& socket : m_serverSockets)
+    {
+        m_loop->removeRead(socket->get());
+    }
+}
+
 bool Server::addServer(const ConfigParser::Server& config)
 {
     auto serverSocket = Socket::bind(config.address, Socket::Type::UDP);

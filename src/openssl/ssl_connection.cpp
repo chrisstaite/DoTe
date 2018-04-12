@@ -77,6 +77,10 @@ std::vector<unsigned char> SslConnection::getPeerCertificateHash()
                 hash.clear();
             }
         }
+        if (certificate)
+        {
+            X509_free(certificate);
+        }
     }
     return hash;
 }
@@ -91,6 +95,7 @@ bool SslConnection::verifyHostname(const std::string& hostname)
         {
             HostnameVerifier verifier(certificate);
             result = verifier.isValid(hostname);
+            X509_free(certificate);
         }
     }
     return result;
@@ -130,7 +135,7 @@ SslConnection::Result SslConnection::connect()
 
 SslConnection::Result SslConnection::shutdown()
 {
-    return doFunction(SSL_shutdown);
+    return doFunction(&SSL_shutdown);
 }
 
 SslConnection::Result SslConnection::write(const std::vector<char>& buffer)

@@ -26,6 +26,9 @@ class Server
     Server(const Server&) = delete;
     Server& operator=(const Server&) = delete;
 
+    /// \brief  Remove the server sockets from the loop
+    ~Server();
+
     /// \brief  Add a server interface
     ///
     /// \param config  The configuration to add
