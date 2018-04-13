@@ -69,3 +69,18 @@ after the `-f` flag they are to pin.  The `-h` will
 be the hostname to match agains and the `-p` flag
 is the Base64 encoding of the certificate public
 key.
+
+The maximum number of outgoing forwarder requests
+to be made at the same time may be limited by the
+`-m 5` flag, which in this case would limit them
+to five.  Any other requests are queued.  There is
+currently no limit on the queue length, and if it
+runs out of memory the process will simply quit with
+an exception.
+
+In order to execute the process as a service there
+is the option to fork it into the background using
+the `-d` flag.  This will continue the process
+executing in the background.  A file containing the
+PID of this background process may be obtained by
+specifying the `-P dote.pid` argument.
