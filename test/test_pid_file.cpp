@@ -34,29 +34,30 @@ TEST(TestPidFile, DoubleLockFail)
     char c = 'a';
     int toChild[2];
     int toParent[2];
-    pipe(toChild);
-    pipe(toParent);
+    ASSERT_EQ(0, pipe(toChild));
+    ASSERT_EQ(0, pipe(toParent));
     if (fork() == 0)
     {
         // Child - lock pid file and wait for read
-        close(toChild[1]);
-        close(toParent[0]);
+        (void) close(toChild[1]);
+        (void) close(toParent[0]);
         PidFile file("test.pid");
-        write(toParent[1], &c, 1);
-        read(toChild[0], &c, 1);
-        close(toParent[1]);
-        close(toChild[0]);
+        ASSERT_TRUE(file.valid());
+        ASSERT_EQ(1, write(toParent[1], &c, 1));
+        ASSERT_EQ(1, read(toChild[0], &c, 1));
+        (void) close(toParent[1]);
+        (void) close(toChild[0]);
         exit(0);
     }
     // Parent - wait for child and then try to lock again
-    close(toChild[0]);
-    close(toParent[1]);
-    read(toParent[0], &c, 1);
+    (void) close(toChild[0]);
+    (void) close(toParent[1]);
+    ASSERT_EQ(1, read(toParent[0], &c, 1));
     PidFile file2("test.pid");
     EXPECT_FALSE(file2.valid());
-    write(toChild[1], &c, 1);
-    close(toParent[0]);
-    close(toChild[1]);
+    EXPECT_EQ(1, write(toChild[1], &c, 1));
+    (void) close(toParent[0]);
+    (void) close(toChild[1]);
 }
 
 }  // namespace dote
