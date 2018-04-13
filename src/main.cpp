@@ -35,6 +35,8 @@ void shutdownHandler(int)
 /// \brief  Drop any root priviledges if we have them
 void dropPriviledges()
 {
+    static constexpr uid_t NOBODY = 65534;
+
     // Check if we are running as root
     if (geteuid() == 0)
     {
@@ -42,7 +44,7 @@ void dropPriviledges()
         if (uid == 0)
         {
             // Set to nobody because this was run as root
-            setreuid(65534, 65534);
+            setreuid(NOBODY, NOBODY);
         }
         else
         {
