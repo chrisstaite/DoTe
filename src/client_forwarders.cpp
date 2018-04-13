@@ -15,10 +15,12 @@ using namespace std::placeholders;
 
 ClientForwarders::ClientForwarders(std::shared_ptr<Loop> loop,
                                    std::shared_ptr<ForwarderConfig> config,
-                                   std::shared_ptr<openssl::Context> context) :
+                                   std::shared_ptr<openssl::Context> context,
+                                   std::size_t maxConnections) :
     m_loop(std::move(loop)),
     m_config(std::move(config)),
     m_context(std::move(context)),
+    m_maxConnections(maxConnections),
     m_forwarders(),
     m_queue()
 { }
@@ -30,7 +32,7 @@ void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
                                      const sockaddr_storage& client,
                                      std::vector<char> request)
 {
-    if (m_forwarders.size() < MAX_QUERIES)
+    if (m_forwarders.size() < m_maxConnections)
     {
         sendRequest(std::move(socket), client, std::move(request));
     }

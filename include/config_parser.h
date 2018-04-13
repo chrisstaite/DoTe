@@ -59,6 +59,12 @@ class ConfigParser
     /// \return  The ciphers to use
     const std::string& ciphers() const;
 
+    /// \brief  Get the maximum number of outgoing forwarder
+    ///         connections to have open at a single time
+    ///
+    /// \return  The maximum number of connections
+    std::size_t maxConnections() const;
+
   private:
     /// \brief  Parse the configuration
     ///
@@ -118,6 +124,12 @@ class ConfigParser
     /// \see parseServer
     void addServer(const char* server);
 
+    /// \brief  Set the maximum number of outgoing forwarder
+    ///         connections at the same time
+    ///
+    /// \param maxConnections  A decimal string with the maximum
+    void setMaxConnections(const char* maxConnections);
+
     /// Whether the parameters are valid
     bool m_valid;
     /// The currently being built forwarder
@@ -128,6 +140,8 @@ class ConfigParser
     std::vector<Server> m_servers;
     /// The OpenSSL ciphers to use
     std::string m_ciphers;
+    /// The maximum number of open connections at a time
+    std::size_t m_maxConnections;
 };
 
 }  // namespace dote

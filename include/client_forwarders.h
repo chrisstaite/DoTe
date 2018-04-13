@@ -22,9 +22,15 @@ class ClientForwarders : public IForwarders
 {
   public:
     /// \brief  Construct an empty set of forwarders
+    ///
+    /// \param loop            The main loop to run queries under
+    /// \param config          The forwarders to send to
+    /// \param context         The context to create queries with
+    /// \param maxConnections  The maximum number of open queries
     ClientForwarders(std::shared_ptr<Loop> loop,
                      std::shared_ptr<ForwarderConfig> config,
-                     std::shared_ptr<openssl::Context> context);
+                     std::shared_ptr<openssl::Context> context,
+                     std::size_t maxConnections);
 
     ClientForwarders(const ClientForwarders&) = delete;
     ClientForwarders& operator=(const ClientForwarders&) = delete;
@@ -42,9 +48,6 @@ class ClientForwarders : public IForwarders
                        std::vector<char> request) override;
 
   private:
-    /// The maximum number of outstanding queries at a time
-    static constexpr std::size_t MAX_QUERIES = 10u;
-
     /// \brief  The details of an incoming query that will be
     ///         sent when there's space left
     struct QueuedQuery
@@ -89,6 +92,8 @@ class ClientForwarders : public IForwarders
     std::shared_ptr<ForwarderConfig> m_config;
     /// The OpenSSL context to use
     std::shared_ptr<openssl::Context> m_context;
+    /// The maximum number of connections at one time
+    std::size_t m_maxConnections;
     /// The currently open connections to forwarders
     std::vector<std::shared_ptr<ForwarderConnection>> m_forwarders;
     /// A queue of requests that will be sent when there's room

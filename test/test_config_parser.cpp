@@ -316,6 +316,62 @@ TEST_F(TestConfigParser, OpenSSLCiphers)
     EXPECT_EQ("ALL", parser.ciphers());
 }
 
+TEST_F(TestConfigParser, MaxConnectionsZero)
+{
+    const char* const args[] = { "", "-m", "0" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, MaxConnectionsLarge)
+{
+    const char* const args[] = { "", "-m", "6001" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, MaxConnectionsBadStart)
+{
+    const char* const args[] = { "", "-m", "h6001" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, MaxConnectionsBadEnd)
+{
+    const char* const args[] = { "", "-m", "6001h" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, MaxConnectionsOne)
+{
+    const char* const args[] = { "", "-m", "1" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(1u, parser.maxConnections());
+}
+
+TEST_F(TestConfigParser, MaxConnectionsTen)
+{
+    const char* const args[] = { "", "-m", "10" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(10u, parser.maxConnections());
+}
+
 TEST_F(TestConfigParser, UnknownOption)
 {
     const char* const args[] = { "", "-x", "a" };

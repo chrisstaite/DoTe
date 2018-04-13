@@ -14,6 +14,9 @@ namespace {
 /// The default cipher suite to use
 constexpr char DEFAULT_CIPHERS[] = "EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA256:EECDH+ECDSA+SHA384:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA384:EDH+aRSA+AESGCM:EDH+aRSA+SHA256:EDH+aRSA:EECDH:!aNULL:!eNULL:!MEDIUM:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!RC4:!SEED";
 
+/// The default maximum open connections at a time
+constexpr std::size_t DEFAULT_MAX_CONNECTIONS = 5u;
+
 }  // anon namespace
 
 ConfigParser::ConfigParser(int argc, char* const argv[]) :
@@ -21,7 +24,8 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     m_partialForwarder(),
     m_forwarders(),
     m_servers(),
-    m_ciphers()
+    m_ciphers(),
+    m_maxConnections(DEFAULT_MAX_CONNECTIONS)
 {
     m_partialForwarder.remote.ss_family = AF_UNSPEC;
 
@@ -178,10 +182,25 @@ void ConfigParser::addPin(const char* pin)
     }
 }
 
+void ConfigParser::setMaxConnections(const char* maxConnections)
+{
+    char *end;
+    long longConnections = strtol(maxConnections, &end, 10);
+    if (*end || longConnections < 1 || longConnections > 6000)
+    {
+        // Invalid number of connections
+        m_valid = false;
+    }
+    else
+    {
+        m_maxConnections = longConnections;
+    }
+}
+
 void ConfigParser::parseConfig(int argc, char* const argv[])
 {
     int c;
-    while ((c = getopt(argc, argv, "s:f:h:p:c:")) != -1)
+    while ((c = getopt(argc, argv, "s:f:h:p:c:m:")) != -1)
     {
         switch (c)
         {
@@ -205,6 +224,10 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
             case 'c':
                 // The OpenSSL ciphers
                 m_ciphers = optarg;
+                break;
+            case 'm':
+                // The maximum number of connections
+                setMaxConnections(optarg);
                 break;
             default:
                 // Unknown option
@@ -239,6 +262,11 @@ const std::vector<ConfigParser::Server>& ConfigParser::servers() const
 const std::string& ConfigParser::ciphers() const
 {
     return m_ciphers;
+}
+
+std::size_t ConfigParser::maxConnections() const
+{
+    return m_maxConnections;
 }
 
 void ConfigParser::defaultForwarders()

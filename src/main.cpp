@@ -64,7 +64,7 @@ int main(int argc, char* const argv[])
     dote::ConfigParser parser(argc, argv);
     if (!parser.valid())
     {
-        fprintf(stderr, "Usage: %s [-s 127.0.0.1:53] [-f 1.1.1.1:853 [-h cloudflare-dns.com] [-p DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM=]] [-c ALL]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-s 127.0.0.1:53] [-f 1.1.1.1:853 [-h cloudflare-dns.com] [-p DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM=]] [-c ALL] [-m 5]\n", argv[0]);
         return 1;
     }
 
@@ -74,8 +74,9 @@ int main(int argc, char* const argv[])
     auto context = std::make_shared<dote::openssl::Context>(parser.ciphers());
 
     // Configure the forwarders
-    auto forwarders =
-        std::make_shared<dote::ClientForwarders>(loop, config, context);
+    auto forwarders = std::make_shared<dote::ClientForwarders>(
+        loop, config, context, parser.maxConnections()
+    );
     for (const auto& forwarderConfig : parser.forwarders())
     {
         config->addForwarder(forwarderConfig);
