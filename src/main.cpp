@@ -22,14 +22,16 @@ std::shared_ptr<dote::Server> g_server;
 
 /// \brief  The signal handler that is called when the
 ///         server should be shutdown
-void shutdownHandler(int)
+///
+/// \param signum  The signal that is being caught
+void shutdownHandler(int signum)
 {
     dote::Log::info << "Shutdown signal received";
     // Stop listening, which will cause us to exit when
     // no more requests are in progress
     g_server.reset();
     // Reset the signal handler
-    signal(SIGINT, SIG_DFL);
+    signal(signum, SIG_DFL);
 }
 
 /// \brief  Drop any root priviledges if we have them
@@ -190,6 +192,7 @@ int main(int argc, char* const argv[])
 
     // Listen for kill signals to shutdown the server
     (void) signal(SIGINT, &shutdownHandler);
+    (void) signal(SIGTERM, &shutdownHandler);
 
     // Start the event loop
     loop->run();
