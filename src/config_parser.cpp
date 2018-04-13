@@ -3,6 +3,7 @@
 #include "openssl/base64.h"
 
 #include <arpa/inet.h>
+#include <getopt.h>
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
@@ -25,7 +26,9 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     m_forwarders(),
     m_servers(),
     m_ciphers(),
-    m_maxConnections(DEFAULT_MAX_CONNECTIONS)
+    m_maxConnections(DEFAULT_MAX_CONNECTIONS),
+    m_pidFile(),
+    m_daemonise(false)
 {
     m_partialForwarder.remote.ss_family = AF_UNSPEC;
 
@@ -200,7 +203,18 @@ void ConfigParser::setMaxConnections(const char* maxConnections)
 void ConfigParser::parseConfig(int argc, char* const argv[])
 {
     int c;
-    while ((c = getopt(argc, argv, "s:f:h:p:c:m:")) != -1)
+    static option long_options[] = {
+        {"server", required_argument, nullptr, 's'},
+        {"forwarder", required_argument, nullptr, 'f'},
+        {"hostname", required_argument, nullptr, 'h'},
+        {"pin", required_argument, nullptr, 'p'},
+        {"ciphers", required_argument, nullptr, 'c'},
+        {"connections", required_argument, nullptr, 'm'},
+        {"daemonise", no_argument, nullptr, 'd'},
+        {"pid_file", required_argument, nullptr, 'P'},
+        {nullptr, 0, nullptr, 0}
+    };
+    while ((c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:", long_options, nullptr)) != -1)
     {
         switch (c)
         {
@@ -228,6 +242,14 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
             case 'm':
                 // The maximum number of connections
                 setMaxConnections(optarg);
+                break;
+            case 'd':
+                // Daemonise the process
+                m_daemonise = true;
+                break;
+            case 'P':
+                // Save the PID of the process to a file
+                m_pidFile = optarg;
                 break;
             default:
                 // Unknown option
@@ -267,6 +289,16 @@ const std::string& ConfigParser::ciphers() const
 std::size_t ConfigParser::maxConnections() const
 {
     return m_maxConnections;
+}
+
+bool ConfigParser::daemonise() const
+{
+    return m_daemonise;
+}
+
+const std::string& ConfigParser::pidFile() const
+{
+    return m_pidFile;
 }
 
 void ConfigParser::defaultForwarders()

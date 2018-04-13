@@ -6,6 +6,7 @@
 #include "client_forwarders.h"
 #include "syslog_logger.h"
 #include "log.h"
+#include "pid_file.h"
 #include "openssl/context.h"
 
 #include <unistd.h>
@@ -24,7 +25,11 @@ std::shared_ptr<dote::Server> g_server;
 void shutdownHandler(int)
 {
     dote::Log::info << "Shutdown signal received";
+    // Stop listening, which will cause us to exit when
+    // no more requests are in progress
     g_server.reset();
+    // Reset the signal handler
+    signal(SIGINT, SIG_DFL);
 }
 
 /// \brief  Drop any root priviledges if we have them
@@ -53,6 +58,78 @@ void dropPriviledges()
 #endif
 }
 
+/// \brief  Print the usage of the command
+///
+/// \param appName  The name of the executable
+void usage(const char* appName)
+{
+    fprintf(stderr, "\n Usage: %s [OPTIONS]\n\n", appName);
+    fprintf(stderr, "  Options:\n");
+    fprintf(stderr, "   -s --server IP[:port]     The server to listen on with optional port.\n");
+    fprintf(stderr, "                             May be specified multiple times.  IPv6\n");
+    fprintf(stderr, "                             addresses must be encapsulated in square\n");
+    fprintf(stderr, "                             brackets (i.e. [::1])\n");
+    fprintf(stderr, "   -f --forwarder IP[:port]  A forwarder to send requests on to with an\n");
+    fprintf(stderr, "                             optional port number.\n");
+    fprintf(stderr, "   -h --hostname  hostname   The hostname of the previously specified\n");
+    fprintf(stderr, "                             forwarders' certificate.\n");
+    fprintf(stderr, "   -p --pin  hash            The Base64 encoding of a SHA-256 hash of the\n");
+    fprintf(stderr, "                             previously specified forwarders' public key.\n");
+    fprintf(stderr, "   -c --ciphers  ciphers     The OpenSSL ciphers to use for connecting\n");
+    fprintf(stderr, "   -m --connections  max     The maximum number of outgoing requests at a\n");
+    fprintf(stderr, "                             time before buffering the requests.\n");
+    fprintf(stderr, "   -d --daemonise            Daemonise this application\n");
+    fprintf(stderr, "   -P --pid_file  filename   Write the PID of the process to a given file\n");
+    fprintf(stderr, "\n");
+}
+
+/// \brief  Daemonise the process, only returns for the
+///         daemoinised process, exits for the parent
+void daemonise()
+{
+    // Fork from the parent
+    pid_t pid = fork();
+    // If there was an error, we can't continue
+    if (pid < 0)
+    {
+        fprintf(stderr, "Unable to fork to daemonise\n");
+        exit(1);
+    }
+    // If this is the parent, then we don't want to continue any further
+    if (pid > 0)
+    {
+        exit(0);
+    }
+
+    // Ignore signal sent from the next child to this parent
+    signal(SIGCHLD, SIG_IGN);
+
+    // Double fork so that the child becomes owned by PID 1
+    pid = fork();
+    // Check for a double-fork error
+    if (pid < 0)
+    {
+        fprintf(stderr, "Unable to double-fork to daemonise\n");
+        exit(1);
+    }
+    // If this is the parent, then we're finished, exit
+    if (pid > 0)
+    {
+        exit(0);
+    }
+
+    // Close any file descriptors that are open
+    for (int fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--)
+    {
+        close(fd);
+    }
+
+    // Re-open the standard input and output to null
+    stdin = fopen("/dev/null", "r");
+    stdout = fopen("/dev/null", "w+");
+    stderr = fopen("/dev/null", "w+");
+}
+
 }  // anon namespace
 
 int main(int argc, char* const argv[])
@@ -64,7 +141,7 @@ int main(int argc, char* const argv[])
     dote::ConfigParser parser(argc, argv);
     if (!parser.valid())
     {
-        fprintf(stderr, "Usage: %s [-s 127.0.0.1:53] [-f 1.1.1.1:853 [-h cloudflare-dns.com] [-p DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM=]] [-c ALL] [-m 5]\n", argv[0]);
+        usage(argv[0]);
         return 1;
     }
 
@@ -82,13 +159,26 @@ int main(int argc, char* const argv[])
         config->addForwarder(forwarderConfig);
     }
 
+    // Daemonise if requested
+    if (parser.daemonise())
+    {
+        daemonise();
+    }
+
+    // Write the pid file if requested
+    dote::PidFile pidFile(parser.pidFile());
+    if (!pidFile.valid())
+    {
+        exit(1);
+    }
+
     // Configure the server
     g_server = std::make_shared<dote::Server>(loop, forwarders);
     for (const auto& serverConfig : parser.servers())
     {
         if (!g_server->addServer(serverConfig))
         {
-            fprintf(stderr, "Unable to bind to server\n");
+            dote::Log::err << "Unable to bind to server port";
             return 1;
         }
     }

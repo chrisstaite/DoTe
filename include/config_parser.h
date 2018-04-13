@@ -65,6 +65,17 @@ class ConfigParser
     /// \return  The maximum number of connections
     std::size_t maxConnections() const;
 
+    /// \brief  Whether the process should fork and daemonise
+    ///
+    /// \return  True if it should fork
+    bool daemonise() const;
+
+    /// \brief  Get the path for the PID file that should be
+    ///         written with the PID of the process
+    ///
+    /// \return  The path to write or an empty string not to
+    const std::string& pidFile() const;
+
   private:
     /// \brief  Parse the configuration
     ///
@@ -142,6 +153,10 @@ class ConfigParser
     std::string m_ciphers;
     /// The maximum number of open connections at a time
     std::size_t m_maxConnections;
+    /// The location of the PID file to write
+    std::string m_pidFile;
+    /// Whether to fork and daemonise
+    bool m_daemonise;
 };
 
 }  // namespace dote

@@ -42,6 +42,8 @@ set(CommonSources
     src/server.cpp
     include/config_parser.h
     src/config_parser.cpp
+    include/pid_file.h
+    src/pid_file.cpp
     include/log.h
     src/log.cpp
     include/noop_log.h
@@ -70,6 +72,7 @@ set(TestSources
     test/parse_inet.h
     test/parse_inet.cpp
     test/test_config_parser.cpp
+    test/test_pid_file.cpp
     test/test_log.cpp)
 
 # Remove RTTI because we don't need it and it bloats the binary

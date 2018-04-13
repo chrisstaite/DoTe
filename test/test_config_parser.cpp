@@ -227,6 +227,19 @@ TEST_F(TestConfigParser, OneServerIPv6)
     EXPECT_EQ(expected, parser.servers());
 }
 
+TEST_F(TestConfigParser, OneServerIPv6Long)
+{
+    const char* const args[] = { "", "--server", "[::1]:5353" };
+    std::vector<ConfigParser::Server> expected{
+        {parse6("::1", 5353) }
+    };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.servers());
+}
+
 TEST_F(TestConfigParser, OnlyHostname)
 {
     const char* const args[] = { "", "-h", "domain.com" };
@@ -284,9 +297,35 @@ TEST_F(TestConfigParser, OneForwarderWithHostname)
     EXPECT_EQ(expected, parser.forwarders());
 }
 
+TEST_F(TestConfigParser, OneForwarderWithHostnameLong)
+{
+    const char* const args[] = { "", "--forwarder", "1.1.1.1", "--hostname", "domain.com" };
+    std::vector<ConfigParser::Forwarder> expected{
+        {parse4("1.1.1.1", 853), "domain.com", {} }
+    };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.forwarders());
+}
+
 TEST_F(TestConfigParser, OneForwarderWithPin)
 {
     const char* const args[] = { "", "-f", "1.1.1.1", "-p", "AQ==" };
+    std::vector<ConfigParser::Forwarder> expected{
+        { parse4("1.1.1.1", 853), "", { 0x01 } }
+    };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.forwarders());
+}
+
+TEST_F(TestConfigParser, OneForwarderWithPinLong)
+{
+    const char* const args[] = { "", "--forwarder", "1.1.1.1", "--pin", "AQ==" };
     std::vector<ConfigParser::Forwarder> expected{
         { parse4("1.1.1.1", 853), "", { 0x01 } }
     };
@@ -309,6 +348,16 @@ TEST_F(TestConfigParser, OneForwarderWithInvalidPin)
 TEST_F(TestConfigParser, OpenSSLCiphers)
 {
     const char* const args[] = { "", "-c", "ALL" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ("ALL", parser.ciphers());
+}
+
+TEST_F(TestConfigParser, OpenSSLCiphersLong)
+{
+    const char* const args[] = { "", "--ciphers", "ALL" };
     ConfigParser parser(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
@@ -362,6 +411,16 @@ TEST_F(TestConfigParser, MaxConnectionsOne)
     EXPECT_EQ(1u, parser.maxConnections());
 }
 
+TEST_F(TestConfigParser, MaxConnectionsOneLong)
+{
+    const char* const args[] = { "", "--connections", "1" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(1u, parser.maxConnections());
+}
+
 TEST_F(TestConfigParser, MaxConnectionsTen)
 {
     const char* const args[] = { "", "-m", "10" };
@@ -370,6 +429,56 @@ TEST_F(TestConfigParser, MaxConnectionsTen)
     );
     EXPECT_TRUE(parser.valid());
     EXPECT_EQ(10u, parser.maxConnections());
+}
+
+TEST_F(TestConfigParser, Daemonise)
+{
+    const char* const args[] = { "", "-d" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_TRUE(parser.daemonise());
+}
+
+TEST_F(TestConfigParser, DaemoniseLong)
+{
+    const char* const args[] = { "", "--daemonise" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_TRUE(parser.daemonise());
+}
+
+TEST_F(TestConfigParser, NotDaemoniseDefault)
+{
+    const char* const args[] = { "" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_FALSE(parser.daemonise());
+}
+
+TEST_F(TestConfigParser, PidFile)
+{
+    const char* const args[] = { "", "-P", "pidfile" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ("pidfile", parser.pidFile());
+}
+
+TEST_F(TestConfigParser, PidFileLong)
+{
+    const char* const args[] = { "", "--pid_file", "pidfile" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ("pidfile", parser.pidFile());
 }
 
 TEST_F(TestConfigParser, UnknownOption)
