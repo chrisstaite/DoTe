@@ -1,13 +1,9 @@
 
+#include "dote.h"
 #include "config_parser.h"
-#include "server.h"
-#include "loop.h"
-#include "forwarder_config.h"
-#include "client_forwarders.h"
 #include "syslog_logger.h"
 #include "log.h"
 #include "pid_file.h"
-#include "openssl/context.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -17,8 +13,8 @@
 
 namespace {
 
-/// The server instance to kill on a signal
-std::shared_ptr<dote::Server> g_server;
+/// The dote instance to use
+std::shared_ptr<dote::Dote> g_dote;
 
 /// \brief  The signal handler that is called when the
 ///         server should be shutdown
@@ -29,7 +25,7 @@ void shutdownHandler(int signum)
     dote::Log::info << "Shutdown signal received";
     // Stop listening, which will cause us to exit when
     // no more requests are in progress
-    g_server.reset();
+    g_dote->shutdown();
     // Reset the signal handler
     signal(signum, SIG_DFL);
 }
@@ -125,7 +121,7 @@ void daemonise()
     // Close any file descriptors that are open
     for (int fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--)
     {
-        close(fd);
+        (void) close(fd);
     }
 
     // Re-open the standard input and output to null
@@ -149,19 +145,8 @@ int main(int argc, char* const argv[])
         return 1;
     }
 
-    // Configure the context
-    auto loop = std::make_shared<dote::Loop>();
-    auto config = std::make_shared<dote::ForwarderConfig>();
-    auto context = std::make_shared<dote::openssl::Context>(parser.ciphers());
-
-    // Configure the forwarders
-    auto forwarders = std::make_shared<dote::ClientForwarders>(
-        loop, config, context, parser.maxConnections()
-    );
-    for (const auto& forwarderConfig : parser.forwarders())
-    {
-        config->addForwarder(forwarderConfig);
-    }
+    // Create the DoTe instance
+    g_dote = std::make_shared<dote::Dote>(parser);
 
     // Daemonise if requested
     if (parser.daemonise())
@@ -176,15 +161,10 @@ int main(int argc, char* const argv[])
         exit(1);
     }
 
-    // Configure the server
-    g_server = std::make_shared<dote::Server>(loop, forwarders);
-    for (const auto& serverConfig : parser.servers())
+    // Bind to the server ports
+    if (!g_dote->listen(parser))
     {
-        if (!g_server->addServer(serverConfig))
-        {
-            dote::Log::err << "Unable to bind to server port";
-            return 1;
-        }
+        return 1;
     }
 
     // Drop priviledges
@@ -195,7 +175,7 @@ int main(int argc, char* const argv[])
     (void) signal(SIGTERM, &shutdownHandler);
 
     // Start the event loop
-    loop->run();
+    g_dote->run();
 
     return 0;
 }

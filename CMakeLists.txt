@@ -51,7 +51,9 @@ set(CommonSources
     src/stream_log.cpp
     include/i_logger.h
     include/syslog_logger.h
-    src/syslog_logger.cpp)
+    src/syslog_logger.cpp
+    include/dote.h
+    src/dote.cpp)
 
 # Set up the sources for the binary
 set(BinarySources
