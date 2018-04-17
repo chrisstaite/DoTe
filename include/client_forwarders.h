@@ -8,8 +8,8 @@
 
 namespace dote {
 
-class Loop;
-class ForwarderConfig;
+class ILoop;
+class IForwarderConfig;
 class ForwarderConnection;
 
 namespace openssl {
@@ -27,8 +27,8 @@ class ClientForwarders : public IForwarders
     /// \param config          The forwarders to send to
     /// \param context         The context to create queries with
     /// \param maxConnections  The maximum number of open queries
-    ClientForwarders(std::shared_ptr<Loop> loop,
-                     std::shared_ptr<ForwarderConfig> config,
+    ClientForwarders(std::shared_ptr<ILoop> loop,
+                     std::shared_ptr<IForwarderConfig> config,
                      std::shared_ptr<openssl::Context> context,
                      std::size_t maxConnections);
 
@@ -87,9 +87,9 @@ class ClientForwarders : public IForwarders
     void handleShutdown(ForwarderConnection& connection);
 
     /// The looper to use to manage sockets
-    std::shared_ptr<Loop> m_loop;
+    std::shared_ptr<ILoop> m_loop;
     /// The configuration to use for the forwarders
-    std::shared_ptr<ForwarderConfig> m_config;
+    std::shared_ptr<IForwarderConfig> m_config;
     /// The OpenSSL context to use
     std::shared_ptr<openssl::Context> m_context;
     /// The maximum number of connections at one time

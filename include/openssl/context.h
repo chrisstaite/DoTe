@@ -12,17 +12,18 @@ namespace openssl {
 /// \brief  A wrapper around an OpenSSL context which automatically
 ///         cleans it up on destruction.  Will also initialise the
 ///         library on construction if context creation fails.
-class Context {
+class Context
+{
   public:
     /// \brief  Create a new OpenSSL context, initialising the library
     ///         if required.
     ///
     /// \param ciphers  The ciphers to use with OpenSSL
     Context(const std::string& ciphers);
-    
+
     Context(const Context&) = delete;
     Context& operator=(const Context&) = delete;
-    
+
     /// \brief  Clean up the context
     ~Context();
 

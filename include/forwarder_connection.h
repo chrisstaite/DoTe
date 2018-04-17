@@ -12,8 +12,8 @@
 
 namespace dote {
 
-class Loop;
-class ForwarderConfig;
+class ILoop;
+class IForwarderConfig;
 class Socket;
 
 namespace openssl {
@@ -39,8 +39,8 @@ class ForwarderConnection
     /// \param loop      The looper to manage the connection
     /// \param config    The configuration for the possible forwarders
     /// \param context   The OpenSSL context to communicate with
-    ForwarderConnection(std::shared_ptr<Loop> loop,
-                        std::shared_ptr<ForwarderConfig> config,
+    ForwarderConnection(std::shared_ptr<ILoop> loop,
+                        std::shared_ptr<IForwarderConfig> config,
                         std::shared_ptr<openssl::Context> context);
 
     ForwarderConnection(const ForwarderConnection&) = delete;
@@ -123,9 +123,9 @@ class ForwarderConnection
     void close();
 
     /// The looper used to manage the connection
-    std::shared_ptr<Loop> m_loop;
+    std::shared_ptr<ILoop> m_loop;
     /// The configuration for the available forwarders
-    std::shared_ptr<ForwarderConfig> m_config;
+    std::shared_ptr<IForwarderConfig> m_config;
     /// The underlying OpenSSL connection
     openssl::SslConnection m_connection;
     /// A function to handle incoming data on the socket

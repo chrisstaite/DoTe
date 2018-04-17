@@ -1,7 +1,7 @@
 
 #include "server.h"
 #include "socket.h"
-#include "loop.h"
+#include "i_loop.h"
 #include "forwarder_connection.h"
 #include "i_forwarders.h"
 #include "log.h"
@@ -14,7 +14,7 @@ namespace dote {
 
 using namespace std::placeholders;
 
-Server::Server(std::shared_ptr<Loop> loop,
+Server::Server(std::shared_ptr<ILoop> loop,
                std::shared_ptr<IForwarders> forwarders) :
     m_loop(std::move(loop)),
     m_forwarders(std::move(forwarders)),

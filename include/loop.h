@@ -1,27 +1,27 @@
 
 #pragma once
 
+#include "i_loop.h"
+
 #include <poll.h>
 
 #include <vector>
 #include <map>
-#include <functional>
 
 namespace dote {
 
 /// \brief  An event loop that does polling
-class Loop
+class Loop : public ILoop
 {
   public:
-    /// The type to call when the loop is available, called with the
-    /// handle that caused it to be called
-    using Callback = std::function<void(int)>;
-
     /// \brief  Create the looper
     Loop() = default;
 
     Loop(const Loop&) = delete;
     Loop& operator=(const Loop&) = delete;
+
+    /// \brief  Has to be noexcept as override
+    ~Loop() noexcept = default;
 
     /// \brief  Run the loop
     void run();
@@ -32,7 +32,7 @@ class Loop
     /// \param callback  The callback to call if it triggers
     ///
     /// \return  True if the handle is not already registered and now is
-    bool registerRead(int handle, Callback callback);
+    bool registerRead(int handle, Callback callback) override;
 
     /// \brief   Register for write availability on a given handle
     ///
@@ -40,7 +40,7 @@ class Loop
     /// \param callback  The callback to call if it triggers
     ///
     /// \return  True if the handle is not already registered and now is
-    bool registerWrite(int handle, Callback callback);
+    bool registerWrite(int handle, ILoop::Callback callback) override;
 
     /// \brief  Register for exceptions on a given handle
     ///
@@ -48,22 +48,22 @@ class Loop
     /// \param callback  The callback to call if it triggers
     ///
     /// \return  True if the handle is not already registered and now is
-    bool registerException(int handle, Callback callback);
+    bool registerException(int handle, ILoop::Callback callback) override;
 
     /// \brief  Remove a read handle from the loop
     ///
     /// \param handle  The handle to remove read handles for
-    void removeRead(int handle);
+    void removeRead(int handle) override;
 
     /// \brief  Remove a write handle from the loop
     ///
     /// \param handle  The handle to remove write handles for
-    void removeWrite(int handle);
+    void removeWrite(int handle) override;
 
     /// \brief  Remove a exception handle from the loop
     ///
     /// \param handle  The handle to remove exception handles for
-    void removeException(int handle);
+    void removeException(int handle) override;
 
   private:
     /// \brief  Register a given handle with m_fds for the poll

@@ -1,8 +1,8 @@
 
 #include "client_forwarders.h"
 #include "forwarder_connection.h"
-#include "loop.h"
-#include "forwarder_config.h"
+#include "i_loop.h"
+#include "i_forwarder_config.h"
 #include "log.h"
 #include "socket.h"
 
@@ -13,8 +13,8 @@ namespace dote {
 
 using namespace std::placeholders;
 
-ClientForwarders::ClientForwarders(std::shared_ptr<Loop> loop,
-                                   std::shared_ptr<ForwarderConfig> config,
+ClientForwarders::ClientForwarders(std::shared_ptr<ILoop> loop,
+                                   std::shared_ptr<IForwarderConfig> config,
                                    std::shared_ptr<openssl::Context> context,
                                    std::size_t maxConnections) :
     m_loop(std::move(loop)),

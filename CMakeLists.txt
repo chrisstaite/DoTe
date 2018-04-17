@@ -31,11 +31,13 @@ set(CommonSources
     src/socket.cpp
     include/forwarder_connection.h
     src/forwarder_connection.cpp
+    include/i_forwarder_config.h
     include/forwarder_config.h
     src/forwarder_config.cpp
     include/i_forwarders.h
     include/client_forwarders.h
     src/client_forwarders.cpp
+    include/i_loop.h
     include/loop.h
     src/loop.cpp
     include/server.h

@@ -8,7 +8,7 @@
 
 namespace dote {
 
-class Loop;
+class ILoop;
 class Socket;
 class IForwarders;
 
@@ -20,7 +20,7 @@ class Server
     ///
     /// \param loop        The looper to use to read
     /// \param forwarders  The forwarder storage
-    Server(std::shared_ptr<Loop> loop,
+    Server(std::shared_ptr<ILoop> loop,
            std::shared_ptr<IForwarders> forwarders);
 
     Server(const Server&) = delete;
@@ -43,7 +43,7 @@ class Server
     void handleDnsRequest(int handle);
 
     /// The looper to read using
-    std::shared_ptr<Loop> m_loop;
+    std::shared_ptr<ILoop> m_loop;
     /// The available forwarders
     std::shared_ptr<IForwarders> m_forwarders;
     /// The sockets that we are recieving from
