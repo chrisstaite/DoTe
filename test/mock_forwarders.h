@@ -10,7 +10,8 @@ namespace dote {
 class MockForwarders : public IForwarders
 {
   public:
-    ~MockForwarders() noexcept = default;
+    ~MockForwarders() noexcept
+    { }
 
     MOCK_METHOD3(handleRequest, void(std::shared_ptr<Socket> socket,
                                      const sockaddr_storage& client,

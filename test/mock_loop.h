@@ -10,7 +10,8 @@ namespace dote {
 class MockLoop : public ILoop
 {
   public:
-    ~MockLoop() noexcept = default;
+    ~MockLoop() noexcept
+    { }
 
     MOCK_METHOD2(registerRead, bool(int, Callback));
     MOCK_METHOD2(registerWrite, bool(int, Callback));

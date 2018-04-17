@@ -10,7 +10,8 @@ namespace dote {
 class MockLogger : public ILogger
 {
   public:
-    ~MockLogger() noexcept = default;
+    ~MockLogger() noexcept
+    { }
 
     MOCK_METHOD2(log, void(int, const std::string&));
 };
