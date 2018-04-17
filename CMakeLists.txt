@@ -63,6 +63,10 @@ set(BinarySources
 
 # Set up the sources for the tests
 set(TestSources
+    test/mock_logger.h
+    test/mock_loop.h
+    test/mock_forwarders.h
+    test/mock_forwarder_config.h
     test/openssl/test_context.cpp
     test/openssl/test_ssl_connection.cpp
     test/openssl/test_hostname_verifier.cpp

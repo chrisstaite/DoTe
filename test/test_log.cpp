@@ -1,21 +1,10 @@
 
 #include "log.h"
+#include "mock_logger.h"
 
 #include <syslog.h>
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-
 namespace dote {
-
-class MockLogger : public ILogger
-{
-  public:
-    ~MockLogger() noexcept
-    { }
-
-    MOCK_METHOD2(log, void(int, const std::string&));
-};
 
 class TestLog : public ::testing::Test
 {
