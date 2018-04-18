@@ -77,6 +77,7 @@ set(TestSources
     test/openssl/test_ssl_connection.cpp
     test/openssl/test_hostname_verifier.cpp
     test/openssl/test_base64.cpp
+    test/openssl/test_ssl_factory.cpp
     test/test_socket.cpp
     test/test_forwarder_connection.cpp
     test/test_forwarder_config.cpp

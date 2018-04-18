@@ -14,7 +14,11 @@ SslFactory::~SslFactory() noexcept
 
 std::shared_ptr<ISslConnection> SslFactory::create()
 {
-    return std::make_shared<SslConnection>(m_context);
+    if (m_context)
+    {
+        return std::make_shared<SslConnection>(m_context);
+    }
+    return {nullptr};
 }
 
 }  // namespace openssl
