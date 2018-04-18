@@ -13,7 +13,7 @@ class IForwarderConfig;
 class ForwarderConnection;
 
 namespace openssl {
-class Context;
+class ISslFactory;
 }  // namespace openssl
 
 /// \brief  A collection of connections to forwarders, one for each
@@ -25,11 +25,11 @@ class ClientForwarders : public IForwarders
     ///
     /// \param loop            The main loop to run queries under
     /// \param config          The forwarders to send to
-    /// \param context         The context to create queries with
+    /// \param ssl             A factory for creating SSL
     /// \param maxConnections  The maximum number of open queries
     ClientForwarders(std::shared_ptr<ILoop> loop,
                      std::shared_ptr<IForwarderConfig> config,
-                     std::shared_ptr<openssl::Context> context,
+                     std::shared_ptr<openssl::ISslFactory> ssl,
                      std::size_t maxConnections);
 
     ClientForwarders(const ClientForwarders&) = delete;
@@ -90,8 +90,8 @@ class ClientForwarders : public IForwarders
     std::shared_ptr<ILoop> m_loop;
     /// The configuration to use for the forwarders
     std::shared_ptr<IForwarderConfig> m_config;
-    /// The OpenSSL context to use
-    std::shared_ptr<openssl::Context> m_context;
+    /// The OpenSSL factory to create
+    std::shared_ptr<openssl::ISslFactory> m_ssl;
     /// The maximum number of connections at one time
     std::size_t m_maxConnections;
     /// The currently open connections to forwarders

@@ -15,11 +15,11 @@ using namespace std::placeholders;
 
 ClientForwarders::ClientForwarders(std::shared_ptr<ILoop> loop,
                                    std::shared_ptr<IForwarderConfig> config,
-                                   std::shared_ptr<openssl::Context> context,
+                                   std::shared_ptr<openssl::ISslFactory> ssl,
                                    std::size_t maxConnections) :
     m_loop(std::move(loop)),
     m_config(std::move(config)),
-    m_context(std::move(context)),
+    m_ssl(std::move(ssl)),
     m_maxConnections(maxConnections),
     m_forwarders(),
     m_queue()
@@ -49,7 +49,7 @@ void ClientForwarders::sendRequest(std::shared_ptr<Socket> socket,
                                    std::vector<char> request)
 {
     auto connection = std::make_shared<ForwarderConnection>(
-        m_loop, m_config, m_context
+        m_loop, m_config, m_ssl
     );
     // Send the request
     if (connection->send(request))

@@ -21,6 +21,12 @@ class Socket
         UDP
     };
 
+    /// \brief  Wrap a raw socket handle
+    ///
+    /// \param handle  The handle of the socket to wrap and close
+    ///                on destruction
+    explicit Socket(int handle);
+
     /// \brief  Construct a new non-blocking socket
     ///
     /// \param domain  The domain (PF_INET or PF_INET6)

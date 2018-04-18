@@ -19,8 +19,12 @@ enable_testing()
 
 # Set up the sources common between the tests and binaries
 set(CommonSources
+    include/openssl/i_ssl_factory.h
+    include/openssl/ssl_factory.h
+    src/openssl/ssl_factory.cpp
     include/openssl/context.h
     src/openssl/context.cpp
+    include/openssl/i_ssl_connection.h
     include/openssl/ssl_connection.h
     src/openssl/ssl_connection.cpp
     include/openssl/hostname_verifier.h
@@ -67,6 +71,8 @@ set(TestSources
     test/mock_loop.h
     test/mock_forwarders.h
     test/mock_forwarder_config.h
+    test/openssl/mock_ssl_connection.h
+    test/openssl/mock_ssl_factory.h
     test/openssl/test_context.cpp
     test/openssl/test_ssl_connection.cpp
     test/openssl/test_hostname_verifier.cpp

@@ -7,6 +7,7 @@
 #include "client_forwarders.h"
 #include "forwarder_config.h"
 #include "openssl/context.h"
+#include "openssl/ssl_factory.h"
 
 namespace dote {
 
@@ -15,7 +16,10 @@ Dote::Dote(const ConfigParser& config) :
     m_config(std::make_shared<ForwarderConfig>()),
     m_context(std::make_shared<openssl::Context>(config.ciphers())),
     m_forwarders(std::make_shared<ClientForwarders>(
-        m_loop, m_config, m_context, config.maxConnections()
+        m_loop,
+        m_config,
+        std::make_shared<openssl::SslFactory>(m_context),
+        config.maxConnections()
     )),
     m_server(nullptr)
 {

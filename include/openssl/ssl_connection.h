@@ -1,8 +1,9 @@
 
 #pragma once
 
+#include "i_ssl_connection.h"
+
 #include <memory>
-#include <vector>
 #include <functional>
 
 typedef struct ssl_st SSL;
@@ -13,25 +14,9 @@ namespace openssl {
 class Context;
 
 /// \brief  A wrapper around an OpenSSL SSL connection
-class SslConnection
+class SslConnection : public ISslConnection
 {
   public:
-    /// \brief  The result types from communications
-    enum Result
-    {
-        /// Call the function again when there's something
-        /// to read on the socket
-        NEED_READ,
-        /// Call the function again when there's room to
-        /// write on the socket
-        NEED_WRITE,
-        /// The function has completed its role
-        SUCCESS,
-        /// There's no way that this is going to succeed,
-        /// don't bother trying to call again
-        FATAL
-    };
-
     /// \brief  Create a new SSL connection
     ///
     /// \param context  The context to create the connection in
@@ -53,18 +38,18 @@ class SslConnection
     SslConnection& operator=(const SslConnection&) = delete;
 
     /// \brief  Clean up the wrapped connection
-    ~SslConnection();
+    ~SslConnection() noexcept;
 
     /// \brief  Set the underlying socket for this connection
     ///
     /// \param handle  The underlying socket to set on this connection
-    void setSocket(int handle);
+    void setSocket(int handle) override;
 
     /// \brief  Get the SHA-256 hash of the public key of the attached
     ///         peer certificate after connect has completed
     ///
     /// \return  The SHA-256 hash of the certificate's public key
-    std::vector<unsigned char> getPeerCertificateHash();
+    std::vector<unsigned char> getPeerCertificateHash() override;
 
     /// \brief  Check the connected peer certificate is valid for the
     ///         given hostname after connect has completed
@@ -72,31 +57,31 @@ class SslConnection
     /// \param hostname  The hostname to verify
     ///
     /// \return  True if the hostname is valid for the connected peer
-    bool verifyHostname(const std::string& hostname);
+    bool verifyHostname(const std::string& hostname) override;
 
     /// \brief  Connect the underlying connection
     ///
     /// \return  The status of the function
-    Result connect();
+    Result connect() override;
 
     /// \brief  Shutdown the underlying connection
     ///
     /// \return  The status of the function
-    Result shutdown();
+    Result shutdown() override;
 
     /// \brief  Write a buffer to the socket
     ///
     /// \param buffer  The buffer to write
     ///
     /// \return  The status of the function
-    Result write(const std::vector<char>& buffer);
+    Result write(const std::vector<char>& buffer) override;
 
     /// \brief  Read from the socket
     ///
     /// \param buffer  The buffer to read into, resized to fit the content
     ///
     /// \return  The status of the function
-    Result read(std::vector<char>& buffer);
+    Result read(std::vector<char>& buffer) override;
 
   private:
     /// The maximum size of the read

@@ -44,7 +44,7 @@ SslConnection& SslConnection::operator=(dote::openssl::SslConnection&& other)
     return *this;
 }
 
-SslConnection::~SslConnection()
+SslConnection::~SslConnection() noexcept
 {
     if (m_ssl)
     {

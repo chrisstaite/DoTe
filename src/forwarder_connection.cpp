@@ -2,6 +2,7 @@
 #include "forwarder_connection.h"
 #include "i_loop.h"
 #include "i_forwarder_config.h"
+#include "openssl/i_ssl_factory.h"
 #include "socket.h"
 #include "log.h"
 
@@ -11,10 +12,10 @@ using namespace std::placeholders;
 
 ForwarderConnection::ForwarderConnection(std::shared_ptr<ILoop> loop,
                                          std::shared_ptr<IForwarderConfig> config,
-                                         std::shared_ptr<openssl::Context> context) :
+                                         std::shared_ptr<openssl::ISslFactory> ssl) :
     m_loop(std::move(loop)),
     m_config(std::move(config)),
-    m_connection(std::move(context)),
+    m_connection(ssl->create()),
     m_incoming(),
     m_shutdown(),
     m_state(CONNECTING),
@@ -30,7 +31,7 @@ ForwarderConnection::ForwarderConnection(std::shared_ptr<ILoop> loop,
 
         if (m_socket)
         {
-            m_connection.setSocket(m_socket->get());
+            m_connection->setSocket(m_socket->get());
             m_loop->registerException(
                 m_socket->get(),
                 std::bind(&ForwarderConnection::exception, this, _1)
@@ -70,9 +71,9 @@ bool ForwarderConnection::closed()
 
 bool ForwarderConnection::verifyConnection()
 {
-    return m_connection.verifyHostname(m_forwarder.host) &&
+    return m_connection->verifyHostname(m_forwarder.host) &&
         (m_forwarder.pin.empty() ||
-            m_connection.getPeerCertificateHash() == m_forwarder.pin);
+            m_connection->getPeerCertificateHash() == m_forwarder.pin);
 }
 
 void ForwarderConnection::connect(int handle)
@@ -80,7 +81,7 @@ void ForwarderConnection::connect(int handle)
     m_loop->removeWrite(handle);
     m_loop->removeRead(handle);
 
-    switch (m_connection.connect())
+    switch (m_connection->connect())
     {
         case openssl::SslConnection::Result::NEED_READ:
             m_loop->registerRead(
@@ -134,7 +135,7 @@ void ForwarderConnection::connect(int handle)
 void ForwarderConnection::incoming(int handle)
 {
     std::vector<char> buffer;
-    switch (m_connection.read(buffer))
+    switch (m_connection->read(buffer))
     {
         case openssl::SslConnection::Result::NEED_READ:
             // Nothing required to do, we're always the read handler
@@ -174,7 +175,7 @@ void ForwarderConnection::_shutdown(int handle)
 
     m_state = State::SHUTTING_DOWN;
 
-    switch (m_connection.shutdown())
+    switch (m_connection->shutdown())
     {
         case openssl::SslConnection::Result::NEED_READ:
             m_loop->registerRead(
@@ -227,7 +228,7 @@ bool ForwarderConnection::send(std::vector<char> buffer)
 
 void ForwarderConnection::outgoing(int handle)
 {
-    switch (m_connection.write(m_buffer))
+    switch (m_connection->write(m_buffer))
     {
         case openssl::SslConnection::Result::NEED_READ:
             // Probably fine to ignore like the incoming

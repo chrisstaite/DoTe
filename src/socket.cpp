@@ -70,8 +70,8 @@ int addressLength(int family)
 
 }  // anon namespace
 
-Socket::Socket(int domain, Type type) :
-    m_handle(socket(domain, toType(type), 0))
+Socket::Socket(int handle) :
+    m_handle(handle)
 {
     // Make the socket non-blocking
     if (m_handle >= 0)
@@ -87,6 +87,10 @@ Socket::Socket(int domain, Type type) :
         }
     }
 }
+
+Socket::Socket(int domain, Type type) :
+    Socket(socket(domain, toType(type), 0))
+{ }
 
 Socket::~Socket()
 {

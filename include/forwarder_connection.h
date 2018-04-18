@@ -17,7 +17,7 @@ class IForwarderConfig;
 class Socket;
 
 namespace openssl {
-class Context;
+class ISslFactory;
 }  // namespace openssl
 
 /// \brief  A class representing a connection to a forwarder.
@@ -30,7 +30,7 @@ class ForwarderConnection
     /// The type of the callback to call when data is read on the socket
     using IncomingCallback =
         std::function<void(ForwarderConnection&, std::vector<char>)>;
-    
+
     /// The type of callback to call when the socket is closed
     using ShutdownCallback = std::function<void(ForwarderConnection&)>;
 
@@ -38,10 +38,10 @@ class ForwarderConnection
     ///
     /// \param loop      The looper to manage the connection
     /// \param config    The configuration for the possible forwarders
-    /// \param context   The OpenSSL context to communicate with
+    /// \param ssl       The OpenSSL factory to create the connection with
     ForwarderConnection(std::shared_ptr<ILoop> loop,
                         std::shared_ptr<IForwarderConfig> config,
-                        std::shared_ptr<openssl::Context> context);
+                        std::shared_ptr<openssl::ISslFactory> ssl);
 
     ForwarderConnection(const ForwarderConnection&) = delete;
     ForwarderConnection& operator=(const ForwarderConnection&) = delete;
@@ -66,7 +66,7 @@ class ForwarderConnection
 
     /// \brief  Start the shutdown of the underlying socket
     void shutdown();
-    
+
     /// \brief  Send some data
     ///
     /// \param buffer  The buffer to send
@@ -108,12 +108,12 @@ class ForwarderConnection
     ///
     /// \param handle  The socket the exception occurred on
     void exception(int handle);
-    
+
     /// \brief  Handle incoming data
     ///
     /// \param handle  The socket that is available to read on
     void incoming(int handle);
-    
+
     /// \brief  Handle outgoing data
     ///
     /// \param handle  The socket that is available to write on
@@ -127,7 +127,7 @@ class ForwarderConnection
     /// The configuration for the available forwarders
     std::shared_ptr<IForwarderConfig> m_config;
     /// The underlying OpenSSL connection
-    openssl::SslConnection m_connection;
+    std::shared_ptr<openssl::ISslConnection> m_connection;
     /// A function to handle incoming data on the socket
     IncomingCallback m_incoming;
     /// A function to call when the socket is closed
