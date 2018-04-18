@@ -22,18 +22,6 @@ class SslConnection : public ISslConnection
     /// \param context  The context to create the connection in
     SslConnection(std::shared_ptr<Context> context);
 
-    /// \brief  Move the connection
-    ///
-    /// \param other  The connection to move
-    SslConnection(SslConnection&& other);
-
-    /// \brief  Move the connection
-    ///
-    /// \param other  The connection to move
-    ///
-    /// \return  A reference to this instance
-    SslConnection& operator=(SslConnection&& other);
-
     SslConnection(const SslConnection&) = delete;
     SslConnection& operator=(const SslConnection&) = delete;
 

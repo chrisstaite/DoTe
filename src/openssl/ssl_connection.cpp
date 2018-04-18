@@ -30,20 +30,6 @@ SslConnection::SslConnection(std::shared_ptr<Context> context) :
     }
 }
 
-SslConnection::SslConnection(SslConnection&& other) :
-    m_context(std::move(other.m_context)),
-    m_ssl(other.m_ssl)
-{
-    other.m_ssl = nullptr;
-}
-
-SslConnection& SslConnection::operator=(dote::openssl::SslConnection&& other)
-{
-    std::swap(m_context, other.m_context);
-    std::swap(m_ssl, other.m_ssl);
-    return *this;
-}
-
 SslConnection::~SslConnection() noexcept
 {
     if (m_ssl)
