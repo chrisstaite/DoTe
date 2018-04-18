@@ -11,7 +11,7 @@ namespace openssl {
 class MockSslFactory : public ISslFactory
 {
   public:
-    MockSslFactory() noexcept
+    ~MockSslFactory() noexcept
     { }
 
     MOCK_METHOD0(create, std::shared_ptr<ISslConnection>());

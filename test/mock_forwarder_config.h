@@ -10,7 +10,7 @@ namespace dote {
 class MockForwarderConfig : public IForwarderConfig
 {
   public:
-    MockForwarderConfig() noexcept
+    ~MockForwarderConfig() noexcept
     { }
 
     MOCK_METHOD1(addForwarder, void(const ConfigParser::Forwarder&));
