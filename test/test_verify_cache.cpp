@@ -4,6 +4,8 @@
 #include <openssl/x509.h>
 #include <gmock/gmock.h>
 
+#include <memory>
+
 namespace dote {
 
 using namespace std::placeholders;
