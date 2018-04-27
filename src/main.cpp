@@ -42,12 +42,20 @@ void dropPriviledges()
         if (uid == 0)
         {
             // Set to nobody because this was run as root
-            setreuid(NOBODY, NOBODY);
+            if (setreuid(NOBODY, NOBODY) == -1)
+            {
+                // Can't drop, so exit
+                _exit(1);
+            }
         }
         else
         {
             // Set to the user it was run as
-            setreuid(uid, uid);
+            if (setreuid(uid, uid) == -1)
+            {
+                // Can't drop, so exit
+                _exit(1);
+            }
         }
     }
 #ifdef __linux__
