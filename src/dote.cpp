@@ -9,7 +9,11 @@
 #include "openssl/context.h"
 #include "openssl/ssl_factory.h"
 
+#include <openssl/x509.h>
+
 namespace dote {
+
+using namespace std::placeholders;
 
 Dote::Dote(const ConfigParser& config) :
     m_loop(std::make_shared<Loop>()),
@@ -21,12 +25,14 @@ Dote::Dote(const ConfigParser& config) :
         std::make_shared<openssl::SslFactory>(m_context),
         config.maxConnections()
     )),
-    m_server(nullptr)
+    m_server(nullptr),
+    m_cache(&X509_verify_cert, CACHE_SECONDS)
 {
     for (const auto& forwarderConfig : config.forwarders())
     {
         m_config->addForwarder(forwarderConfig);
     }
+    m_context->setVerifier(std::bind(&VerifyCache::verify, &m_cache, _1));
 }
 
 Dote::~Dote()

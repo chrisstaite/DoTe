@@ -41,6 +41,8 @@ set(CommonSources
     include/i_forwarders.h
     include/client_forwarders.h
     src/client_forwarders.cpp
+    include/verify_cache.h
+    src/verify_cache.cpp
     include/i_loop.h
     include/loop.h
     src/loop.cpp
@@ -82,6 +84,7 @@ set(TestSources
     test/test_forwarder_connection.cpp
     test/test_forwarder_config.cpp
     test/test_client_forwarders.cpp
+    test/test_verify_cache.cpp
     test/test_loop.cpp
     test/test_server.cpp
     test/parse_inet.h

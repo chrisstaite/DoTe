@@ -62,6 +62,28 @@ Context::~Context()
     }
 }
 
+void Context::setVerifier(Verifier verifier)
+{
+    if (m_context)
+    {
+        m_verifier = std::move(verifier);
+        SSL_CTX_set_cert_verify_callback(
+            m_context, &Context::verifyTrampoline, this
+        );
+    }
+}
+
+int Context::verifyTrampoline(X509_STORE_CTX* store, void* context)
+{
+    int result = 0;
+    auto sslContext = reinterpret_cast<Context*>(context);
+    if (sslContext && sslContext->m_verifier)
+    {
+        result = sslContext->m_verifier(store);
+    }
+    return result;
+}
+
 void Context::cacheSession(SSL_SESSION* session)
 {
     if (session == m_session)

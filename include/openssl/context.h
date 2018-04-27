@@ -2,9 +2,11 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_session_st SSL_SESSION;
+typedef struct x509_store_ctx_st X509_STORE_CTX;
 
 namespace dote {
 namespace openssl {
@@ -15,6 +17,10 @@ namespace openssl {
 class Context
 {
   public:
+    /// The type of verifier to forward on to, returns 1 on success
+    /// and 0 on failure
+    using Verifier = std::function<int(X509_STORE_CTX*)>;
+
     /// \brief  Create a new OpenSSL context, initialising the library
     ///         if required.
     ///
@@ -26,6 +32,11 @@ class Context
 
     /// \brief  Clean up the context
     ~Context();
+
+    /// \brief  Set the verifier for the connections
+    ///
+    /// \prarm handle  The verifier to set
+    void setVerifier(Verifier verifier);
 
   protected:
     /// \brief  Get the raw context
@@ -51,10 +62,22 @@ class Context
     ///         for use.
     void configureContext();
 
+    /// \brief  A C-style trampoline to get back the C++ instance to
+    ///         perform the certificate verification
+    ///
+    /// \param store    The context to verify
+    /// \param context  The Context instance to forward to
+    ///
+    /// \return  The result of the context->m_verifier function or
+    ///          0 if any of the checks fail
+    static int verifyTrampoline(X509_STORE_CTX* store, void* context);
+
     /// The wrapped context
     SSL_CTX* m_context;
     /// The client session that we could re-use
     SSL_SESSION* m_session;
+    /// The verifier to use for the connection if not the default
+    Verifier m_verifier;
 };
 
 }  // namespace openssl

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "verify_cache.h"
+
 #include <memory>
 
 namespace dote {
@@ -20,6 +22,9 @@ class Context;
 class Dote
 {
   public:
+    /// The number of seconds to cache the cerificates for
+    static constexpr int CACHE_SECONDS = 30;
+
     /// \brief  Create a DoTe server from a given config
     ///
     /// \param config  The configuration to use
@@ -55,6 +60,8 @@ class Dote
     std::shared_ptr<ClientForwarders> m_forwarders;
     /// The listening servers
     std::shared_ptr<dote::Server> m_server;
+    /// The certificate verification cache for m_context
+    VerifyCache m_cache;
 };
 
 }  // namespace dote

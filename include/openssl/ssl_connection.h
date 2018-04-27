@@ -82,7 +82,7 @@ class SslConnection : public ISslConnection
     ///
     /// \return  The result of the function
     Result doFunction(std::function<int(SSL*)> function);
-  
+
     /// The context that this connection is made under
     std::shared_ptr<Context> m_context;
     /// The wrapped SSL connection
