@@ -33,11 +33,17 @@ class ISslConnection
     /// \param handle  The underlying socket to set on this connection
     virtual void setSocket(int handle) = 0;
 
+    /// \brief  Get the SHA-256 hash of the peer certificate after
+    ///         connect has completed
+    ///
+    /// \return  The SHA-256 hash of the certificate
+    virtual std::vector<unsigned char> getPeerCertificateHash() = 0;
+
     /// \brief  Get the SHA-256 hash of the public key of the attached
     ///         peer certificate after connect has completed
     ///
     /// \return  The SHA-256 hash of the certificate's public key
-    virtual std::vector<unsigned char> getPeerCertificateHash() = 0;
+    virtual std::vector<unsigned char> getPeerCertificatePublicKeyHash() = 0;
 
     /// \brief  Check the connected peer certificate is valid for the
     ///         given hostname after connect has completed

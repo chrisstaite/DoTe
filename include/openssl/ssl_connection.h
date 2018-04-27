@@ -7,6 +7,8 @@
 #include <functional>
 
 typedef struct ssl_st SSL;
+typedef struct x509_st X509;
+typedef struct env_md_st EVP_MD;
 
 namespace dote {
 namespace openssl {
@@ -33,11 +35,17 @@ class SslConnection : public ISslConnection
     /// \param handle  The underlying socket to set on this connection
     void setSocket(int handle) override;
 
+    /// \brief  Get the SHA-256 hash of the peer certificate after
+    ///         connect has completed
+    ///
+    /// \return  The SHA-256 hash of the certificate
+    std::vector<unsigned char> getPeerCertificateHash() override;
+
     /// \brief  Get the SHA-256 hash of the public key of the attached
     ///         peer certificate after connect has completed
     ///
     /// \return  The SHA-256 hash of the certificate's public key
-    std::vector<unsigned char> getPeerCertificateHash() override;
+    std::vector<unsigned char> getPeerCertificatePublicKeyHash() override;
 
     /// \brief  Check the connected peer certificate is valid for the
     ///         given hostname after connect has completed
@@ -74,6 +82,18 @@ class SslConnection : public ISslConnection
   private:
     /// The maximum size of the read
     static constexpr std::size_t MAX_FRAME = 16 * 1024;
+
+    /// The hash function for getPeerCertificateHash
+    using HashFunction = int(*)(
+        const X509*, const EVP_MD*, unsigned char*, unsigned int*
+    );
+
+    /// \brief  Get the SHA-256 hash of the peer certificate
+    ///
+    /// \param function  The hash function to use for the certificate
+    ///
+    /// \return  The SHA-256 hash
+    std::vector<unsigned char> getPeerCertificateHash(HashFunction function);
 
     /// \brief  Perform a function on the underlying SSL handling the
     ///         non-blocking errors

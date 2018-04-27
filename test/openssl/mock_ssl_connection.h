@@ -16,6 +16,7 @@ class MockSslConnection : public ISslConnection
 
     MOCK_METHOD1(setSocket, void(int));
     MOCK_METHOD0(getPeerCertificateHash, std::vector<unsigned char>());
+    MOCK_METHOD0(getPeerCertificatePublicKeyHash, std::vector<unsigned char>());
     MOCK_METHOD1(verifyHostname, bool(const std::string&));
     MOCK_METHOD0(connect, Result());
     MOCK_METHOD0(shutdown, Result());

@@ -49,12 +49,22 @@ int VerifyCache::forwardVerify(X509_STORE_CTX* context)
 int VerifyCache::verify(X509_STORE_CTX* context)
 {
     int result = 0;
+
     auto currentHash = getCertificate(context->cert);
     auto now = std::chrono::steady_clock::now();
-    if (m_cache.empty() || now > m_expiry)
+    if (now > m_expiry)
     {
         // Cache has expired
         m_cache.clear();
+    }
+
+    // Cache is valid, check the certificate
+    if (!currentHash.empty() && currentHash == m_cache)
+    {
+        result = 1;
+    }
+    else
+    {
         result = forwardVerify(context);
         if (result == 1)
         {
@@ -63,24 +73,7 @@ int VerifyCache::verify(X509_STORE_CTX* context)
             m_expiry = now + std::chrono::seconds(m_timeout);
         }
     }
-    else
-    {
-        // Cache is valid, check the certificate
-        if (currentHash == m_cache)
-        {
-            result = 1;
-        }
-        else
-        {
-            result = forwardVerify(context);
-            if (result == 1)
-            {
-                // Cache the new result
-                m_cache = std::move(currentHash);
-                m_expiry = now + std::chrono::seconds(m_timeout);
-            }
-        }
-    }
+
     return result;
 }
 

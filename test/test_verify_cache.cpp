@@ -22,6 +22,8 @@ class TestVerifyCache : public ::testing::Test
     
     ~TestVerifyCache();
 
+    std::unique_ptr<X509, decltype(X509_free)*> createCertificate();
+
   protected:
     X509_STORE_CTX* m_context;
     MockVerifier m_mockVerifier;
@@ -42,6 +44,20 @@ TestVerifyCache::~TestVerifyCache()
     }
 }
 
+std::unique_ptr<X509, decltype(X509_free)*> TestVerifyCache::createCertificate()
+{
+    std::unique_ptr<X509, decltype(X509_free)*> certificate(
+        X509_new(), &X509_free
+    );
+    return certificate;
+}
+
+TEST_F(TestVerifyCache, InvalidForwardReturnsZero)
+{
+    VerifyCache cache(nullptr, 1);
+    EXPECT_EQ(0, cache.verify(m_context));
+}
+
 TEST_F(TestVerifyCache, TestFailCallsAgain)
 {
     VerifyCache cache(m_verifier, 1);
@@ -50,6 +66,29 @@ TEST_F(TestVerifyCache, TestFailCallsAgain)
         .WillRepeatedly(Return(0));
     EXPECT_EQ(0, cache.verify(m_context));
     EXPECT_EQ(0, cache.verify(m_context));
+}
+
+TEST_F(TestVerifyCache, TestPassDoesNotCallAgain)
+{
+    VerifyCache cache(m_verifier, 1);
+    EXPECT_CALL(m_mockVerifier, verify(m_context))
+        .WillOnce(Return(1));
+    auto certificate(createCertificate());
+    m_context->cert = certificate.get();
+    EXPECT_EQ(1, cache.verify(m_context));
+    EXPECT_EQ(1, cache.verify(m_context));
+}
+
+TEST_F(TestVerifyCache, TestPassCallsAgainOnExpiry)
+{
+    VerifyCache cache(m_verifier, 0);
+    EXPECT_CALL(m_mockVerifier, verify(m_context))
+        .Times(2)
+        .WillRepeatedly(Return(1));
+    auto certificate(createCertificate());
+    m_context->cert = certificate.get();
+    EXPECT_EQ(1, cache.verify(m_context));
+    EXPECT_EQ(1, cache.verify(m_context));
 }
 
 }  // namespace dote

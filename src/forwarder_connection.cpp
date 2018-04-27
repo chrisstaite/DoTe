@@ -73,7 +73,8 @@ bool ForwarderConnection::verifyConnection()
 {
     return m_connection->verifyHostname(m_forwarder.host) &&
         (m_forwarder.pin.empty() ||
-            m_connection->getPeerCertificateHash() == m_forwarder.pin);
+            m_connection->getPeerCertificatePublicKeyHash() ==
+                m_forwarder.pin);
 }
 
 void ForwarderConnection::connect(int handle)

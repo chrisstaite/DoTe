@@ -46,7 +46,7 @@ void SslConnection::setSocket(int handle)
     }
 }
 
-std::vector<unsigned char> SslConnection::getPeerCertificateHash()
+std::vector<unsigned char> SslConnection::getPeerCertificateHash(HashFunction function)
 {
     std::vector<unsigned char> hash;
     if (m_ssl)
@@ -57,9 +57,7 @@ std::vector<unsigned char> SslConnection::getPeerCertificateHash()
         {
             hash.resize(EVP_MAX_MD_SIZE);
             unsigned int length = hash.size();
-            if (X509_pubkey_digest(
-                        certificate, sha256, hash.data(), &length
-                    ) == 1)
+            if (function(certificate, sha256, hash.data(), &length) == 1)
             {
                 hash.resize(length);
             }
@@ -74,6 +72,16 @@ std::vector<unsigned char> SslConnection::getPeerCertificateHash()
         }
     }
     return hash;
+}
+
+std::vector<unsigned char> SslConnection::getPeerCertificateHash()
+{
+    return getPeerCertificateHash(&X509_digest);
+}
+
+std::vector<unsigned char> SslConnection::getPeerCertificatePublicKeyHash()
+{
+    return getPeerCertificateHash(&X509_pubkey_digest);
 }
 
 bool SslConnection::verifyHostname(const std::string& hostname)
