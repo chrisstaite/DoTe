@@ -66,7 +66,7 @@ the same way as the `-s` flag.  By default the
 hostname and certificate is not pinned.  To pin
 them, the flags `-h` and `-p` need to be specified
 after the `-f` flag they are to pin.  The `-h` will
-be the hostname to match agains and the `-p` flag
+be the hostname to match against and the `-p` flag
 is the Base64 encoding of the certificate public
 key.
 
