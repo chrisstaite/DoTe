@@ -17,6 +17,7 @@ TEST_COMMAND="make test"
 
 function setup_mips_chroot {
     # Host dependencies
+    sudo apt-get update
     sudo apt-get install -qq -y ${HOST_DEPENDENCIES}
 
     # Create chrooted environment
