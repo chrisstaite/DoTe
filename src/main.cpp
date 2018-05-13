@@ -4,12 +4,15 @@
 #include "syslog_logger.h"
 #include "log.h"
 #include "pid_file.h"
+#include "ip_lookup.h"
 
 #include <unistd.h>
 #include <signal.h>
 #ifdef __linux__
 #include <sys/prctl.h>
 #endif
+
+#include <iostream>
 
 namespace {
 
@@ -71,24 +74,26 @@ void dropPriviledges()
 /// \param appName  The name of the executable
 void usage(const char* appName)
 {
-    fprintf(stderr, "\n Usage: %s [OPTIONS]\n\n", appName);
-    fprintf(stderr, "  Options:\n");
-    fprintf(stderr, "   -s --server IP[:port]     The server to listen on with optional port.\n");
-    fprintf(stderr, "                             May be specified multiple times.  IPv6\n");
-    fprintf(stderr, "                             addresses must be encapsulated in square\n");
-    fprintf(stderr, "                             brackets (i.e. [::1])\n");
-    fprintf(stderr, "   -f --forwarder IP[:port]  A forwarder to send requests on to with an\n");
-    fprintf(stderr, "                             optional port number.\n");
-    fprintf(stderr, "   -h --hostname  hostname   The hostname of the previously specified\n");
-    fprintf(stderr, "                             forwarders' certificate.\n");
-    fprintf(stderr, "   -p --pin  hash            The Base64 encoding of a SHA-256 hash of the\n");
-    fprintf(stderr, "                             previously specified forwarders' public key.\n");
-    fprintf(stderr, "   -c --ciphers  ciphers     The OpenSSL ciphers to use for connecting\n");
-    fprintf(stderr, "   -m --connections  max     The maximum number of outgoing requests at a\n");
-    fprintf(stderr, "                             time before buffering the requests.\n");
-    fprintf(stderr, "   -d --daemonise            Daemonise this application\n");
-    fprintf(stderr, "   -P --pid_file  filename   Write the PID of the process to a given file\n");
-    fprintf(stderr, "\n");
+    std::cerr << "\n Usage: " << appName << " [OPTIONS]\n\n";
+    std::cerr << "  Options:\n";
+    std::cerr << "   -s --server IP[:port]     The server to listen on with optional port.\n";
+    std::cerr << "                             May be specified multiple times.  IPv6\n";
+    std::cerr << "                             addresses must be encapsulated in square\n";
+    std::cerr << "                             brackets (i.e. [::1])\n";
+    std::cerr << "   -f --forwarder IP[:port]  A forwarder to send requests on to with an\n";
+    std::cerr << "                             optional port number.\n";
+    std::cerr << "   -h --hostname  hostname   The hostname of the previously specified\n";
+    std::cerr << "                             forwarders' certificate.\n";
+    std::cerr << "   -p --pin  hash            The Base64 encoding of a SHA-256 hash of the\n";
+    std::cerr << "                             previously specified forwarders' public key.\n";
+    std::cerr << "   -c --ciphers  ciphers     The OpenSSL ciphers to use for connecting\n";
+    std::cerr << "   -m --connections  max     The maximum number of outgoing requests at a\n";
+    std::cerr << "                             time before buffering the requests.\n";
+    std::cerr << "   -d --daemonise            Daemonise this application\n";
+    std::cerr << "   -P --pid_file  filename   Write the PID of the process to a given file\n";
+    std::cerr << "   -l --ip_lookup  IP        Lookup the hostname and certificate pin for\n";
+    std::cerr << "                             an IP address and then exit.\n";
+    std::cerr << "\n";
 }
 
 /// \brief  Daemonise the process, only returns for the
@@ -100,7 +105,7 @@ void daemonise()
     // If there was an error, we can't continue
     if (pid < 0)
     {
-        fprintf(stderr, "Unable to fork to daemonise\n");
+        std::cerr << "Unable to fork to daemonise\n";
         exit(1);
     }
     // If this is the parent, then we don't want to continue any further
@@ -117,7 +122,7 @@ void daemonise()
     // Check for a double-fork error
     if (pid < 0)
     {
-        fprintf(stderr, "Unable to double-fork to daemonise\n");
+        std::cerr << "Unable to double-fork to daemonise\n";
         exit(1);
     }
     // If this is the parent, then we're finished, exit
@@ -153,6 +158,23 @@ int main(int argc, char* const argv[])
         return 1;
     }
 
+    // Check if they want to do an IP lookup
+    if (parser.ipLookup().ss_family != AF_UNSPEC)
+    {
+        dote::IpLookup lookup(parser);
+        auto hostname = lookup.hostname();
+        if (hostname.empty())
+        {
+            std::cerr << "Unable to connect to the given IP\n";
+        }
+        else
+        {
+            std::cout << "Hostname: " << lookup.hostname() << "\n";
+            std::cout << "Pin: " << lookup.pin() << "\n";
+        }
+        return 0;
+    }
+
     // Create the DoTe instance
     g_dote = std::make_shared<dote::Dote>(parser);
 
@@ -166,7 +188,7 @@ int main(int argc, char* const argv[])
     dote::PidFile pidFile(parser.pidFile());
     if (!pidFile.valid())
     {
-        exit(1);
+        return 1;
     }
 
     // Bind to the server ports

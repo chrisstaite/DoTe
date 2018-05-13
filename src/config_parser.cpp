@@ -25,11 +25,13 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     m_partialForwarder(),
     m_forwarders(),
     m_servers(),
+    m_ipLookup(),
     m_ciphers(),
     m_maxConnections(DEFAULT_MAX_CONNECTIONS),
     m_pidFile(),
     m_daemonise(false)
 {
+    m_ipLookup.ss_family = AF_UNSPEC;
     m_partialForwarder.remote.ss_family = AF_UNSPEC;
 
     parseConfig(argc, argv);
@@ -200,6 +202,11 @@ void ConfigParser::setMaxConnections(const char* maxConnections)
     }
 }
 
+const sockaddr_storage& ConfigParser::ipLookup() const
+{
+    return m_ipLookup;
+}
+
 void ConfigParser::parseConfig(int argc, char* const argv[])
 {
     int c;
@@ -212,9 +219,10 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
         {"connections", required_argument, nullptr, 'm'},
         {"daemonise", no_argument, nullptr, 'd'},
         {"pid_file", required_argument, nullptr, 'P'},
+        {"ip_lookup", required_argument, nullptr, 'l'},
         {nullptr, 0, nullptr, 0}
     };
-    while ((c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:", long_options, nullptr)) != -1)
+    while ((c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:l:", long_options, nullptr)) != -1)
     {
         switch (c)
         {
@@ -250,6 +258,13 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
             case 'P':
                 // Save the PID of the process to a file
                 m_pidFile = optarg;
+                break;
+            case 'l':
+                // Save the IP to lookup
+                if (!parseServer(optarg, 853, m_ipLookup))
+                {
+                    m_valid = false;
+                }
                 break;
             default:
                 // Unknown option

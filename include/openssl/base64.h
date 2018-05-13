@@ -21,6 +21,13 @@ class Base64
     ///
     /// \return  The contents of the decoded string
     static std::vector<unsigned char> decode(const std::string& input);
+
+    /// \brief  Encode a vector into a Base64 string
+    ///
+    /// \param input  The data to encode into Base64
+    ///
+    /// \return  The Base64 encoded string
+    static std::string encode(const std::vector<unsigned char>& input);
 };
 
 }  // namespace openssl

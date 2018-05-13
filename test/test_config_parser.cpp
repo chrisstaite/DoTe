@@ -5,8 +5,6 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 
-namespace dote {
-
 bool operator==(const sockaddr_storage& a,
                 const sockaddr_storage& b)
 {
@@ -64,6 +62,8 @@ void PrintTo(const sockaddr_storage& server, ::std::ostream* os) {
         *os << "Unknown family";
     }
 }
+
+namespace dote {
 
 bool operator==(const ConfigParser::Server& a,
                 const ConfigParser::Server& b)
@@ -479,6 +479,61 @@ TEST_F(TestConfigParser, PidFileLong)
     );
     EXPECT_TRUE(parser.valid());
     EXPECT_EQ("pidfile", parser.pidFile());
+}
+
+TEST_F(TestConfigParser, IpLookupV4)
+{
+    sockaddr_storage expected = parse4("127.0.0.1", 5353);
+    const char* const args[] = { "", "-l", "127.0.0.1:5353" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.ipLookup());
+}
+
+TEST_F(TestConfigParser, IpLookupV6)
+{
+    sockaddr_storage expected = parse6("::1", 5353);
+    const char* const args[] = { "", "-l", "[::1]:5353" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.ipLookup());
+}
+
+TEST_F(TestConfigParser, IpLookupV4DefaultPort)
+{
+    sockaddr_storage expected = parse4("127.0.0.1", 853);
+    const char* const args[] = { "", "-l", "127.0.0.1" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.ipLookup());
+}
+
+TEST_F(TestConfigParser, IpLookupV6DefaultPort)
+{
+    sockaddr_storage expected = parse6("::1", 853);
+    const char* const args[] = { "", "-l", "[::1]" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.ipLookup());
+}
+
+TEST_F(TestConfigParser, IpLookupLong)
+{
+    sockaddr_storage expected = parse6("::1", 5353);
+    const char* const args[] = { "", "-l", "[::1]:5353" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(expected, parser.ipLookup());
 }
 
 TEST_F(TestConfigParser, UnknownOption)

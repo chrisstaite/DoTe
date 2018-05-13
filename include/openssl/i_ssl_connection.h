@@ -45,6 +45,11 @@ class ISslConnection
     /// \return  The SHA-256 hash of the certificate's public key
     virtual std::vector<unsigned char> getPeerCertificatePublicKeyHash() = 0;
 
+    /// \brief  Get the certificate common name for the peer certificate
+    ///
+    /// \return  The peer certificate common name
+    virtual std::string getCommonName() = 0;
+
     /// \brief  Check the connected peer certificate is valid for the
     ///         given hostname after connect has completed
     ///

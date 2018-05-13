@@ -59,6 +59,12 @@ class ConfigParser
     /// \return  The ciphers to use
     const std::string& ciphers() const;
 
+    /// \brief  Get the IP address to connect to and get the
+    ///         hostname and pin for, if requested
+    ///
+    /// \return  The IP address to get the hostname and pin for
+    const sockaddr_storage& ipLookup() const;
+
     /// \brief  Get the maximum number of outgoing forwarder
     ///         connections to have open at a single time
     ///
@@ -149,6 +155,8 @@ class ConfigParser
     std::vector<Forwarder> m_forwarders;
     /// The servers that were in the configuration
     std::vector<Server> m_servers;
+    /// The IP to connect to and report hostname and pin for
+    sockaddr_storage m_ipLookup;
     /// The OpenSSL ciphers to use
     std::string m_ciphers;
     /// The maximum number of open connections at a time

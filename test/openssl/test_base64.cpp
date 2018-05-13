@@ -6,9 +6,14 @@
 namespace dote {
 namespace openssl {
 
-TEST(TestBase64, EmptyToEmpty)
+TEST(TestBase64, DecodeEmptyToEmpty)
 {
     EXPECT_EQ(0u, Base64::decode("").size());
+}
+
+TEST(TestBase64, EncodeEmptyToEmpty)
+{
+    EXPECT_EQ(0u, Base64::encode({}).size());
 }
 
 TEST(TestBase64, InvalidCharToEmpty)
@@ -77,6 +82,26 @@ TEST(TestBase64, DecodeFourBytes)
         0x01, 0x02, 0x03, 0x04
     };
     EXPECT_EQ(expected, Base64::decode("AQIDBA=="));
+}
+
+TEST(TestBase64, EncodeSingleByte)
+{
+    EXPECT_STREQ("AQ==", Base64::encode({ 0x01 }).c_str());
+}
+
+TEST(TestBase64, EncodeTwoBytes)
+{
+    EXPECT_STREQ("AQI=", Base64::encode({ 0x01, 0x02 }).c_str());
+}
+
+TEST(TestBase64, EncodeThreeBytes)
+{
+    EXPECT_STREQ("AQID", Base64::encode({ 0x01, 0x02, 0x03 }).c_str());
+}
+
+TEST(TestBase64, EncodeFourBytes)
+{
+    EXPECT_STREQ("AQIDBA==", Base64::encode({ 0x01, 0x02, 0x03, 0x04 }).c_str());
 }
 
 }  // namespace openssl

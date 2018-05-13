@@ -51,13 +51,15 @@ std::vector<unsigned char> SslConnection::getPeerCertificateHash(HashFunction fu
     std::vector<unsigned char> hash;
     if (m_ssl)
     {
-        X509* certificate = SSL_get_peer_certificate(m_ssl);
+        std::unique_ptr<X509, decltype(&X509_free)> certificate(
+            SSL_get_peer_certificate(m_ssl), &X509_free
+        );
         const EVP_MD* sha256 = EVP_sha256();
         if (certificate && sha256)
         {
             hash.resize(EVP_MAX_MD_SIZE);
             unsigned int length = hash.size();
-            if (function(certificate, sha256, hash.data(), &length) == 1)
+            if (function(certificate.get(), sha256, hash.data(), &length) == 1)
             {
                 hash.resize(length);
             }
@@ -65,10 +67,6 @@ std::vector<unsigned char> SslConnection::getPeerCertificateHash(HashFunction fu
             {
                 hash.clear();
             }
-        }
-        if (certificate)
-        {
-            X509_free(certificate);
         }
     }
     return hash;
@@ -84,17 +82,58 @@ std::vector<unsigned char> SslConnection::getPeerCertificatePublicKeyHash()
     return getPeerCertificateHash(&X509_pubkey_digest);
 }
 
+std::string SslConnection::getCommonName()
+{
+    std::string result;
+    if (m_ssl)
+    {
+        std::unique_ptr<X509, decltype(&X509_free)> certificate(
+            SSL_get_peer_certificate(m_ssl), &X509_free
+        );
+        if (certificate)
+        {
+            int index = X509_NAME_get_index_by_NID(
+                X509_get_subject_name(certificate.get()),
+                NID_commonName,
+                -1
+            );
+            if (index >= 0)
+            {
+                X509_NAME_ENTRY* commonName = X509_NAME_get_entry(
+                    X509_get_subject_name(certificate.get()), index
+                );
+                if (commonName)
+                {
+                    ASN1_STRING* commonNameString =
+                        X509_NAME_ENTRY_get_data(commonName);
+                    if (commonNameString)
+                    {
+                        result = std::string(
+                            reinterpret_cast<const char*>(
+                                ASN1_STRING_data(commonNameString)
+                            ),
+                            ASN1_STRING_length(commonNameString)
+                        );
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
 bool SslConnection::verifyHostname(const std::string& hostname)
 {
     bool result = false;
     if (m_ssl)
     {
-        X509* certificate = SSL_get_peer_certificate(m_ssl);
+        std::unique_ptr<X509, decltype(&X509_free)> certificate(
+            SSL_get_peer_certificate(m_ssl), &X509_free
+        );
         if (certificate)
         {
-            HostnameVerifier verifier(certificate);
+            HostnameVerifier verifier(certificate.get());
             result = verifier.isValid(hostname);
-            X509_free(certificate);
         }
     }
     return result;

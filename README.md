@@ -84,3 +84,11 @@ the `-d` flag.  This will continue the process
 executing in the background.  A file containing the
 PID of this background process may be obtained by
 specifying the `-P dote.pid` argument.
+
+To find the hostname and public key for a given DNS
+host, a utility has been included which allows you
+to do just that.  Simply call DoTe with the flag
+`-l <IP>` and it will connect and return the current
+common name and certificate public key hash.  The
+IP may be IPv4 or IPv6 in square brackets, as when
+specifying the forwarder.

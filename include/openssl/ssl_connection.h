@@ -47,6 +47,11 @@ class SslConnection : public ISslConnection
     /// \return  The SHA-256 hash of the certificate's public key
     std::vector<unsigned char> getPeerCertificatePublicKeyHash() override;
 
+    /// \brief  Get the certificate common name for the peer certificate
+    ///
+    /// \return  The peer certificate common name
+    std::string getCommonName() override;
+
     /// \brief  Check the connected peer certificate is valid for the
     ///         given hostname after connect has completed
     ///
