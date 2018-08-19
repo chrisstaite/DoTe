@@ -117,6 +117,9 @@ void daemonise()
 
     // Ignore signal sent from the next child to this parent
     signal(SIGCHLD, SIG_IGN);
+    
+    // Don't get HUP'd by the executing terminal
+    (void) setsid();
 
     // Double fork so that the child becomes owned by PID 1
     pid = fork();
