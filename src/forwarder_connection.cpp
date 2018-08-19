@@ -124,13 +124,7 @@ void ForwarderConnection::connect(int handle)
             m_config->setBad(m_forwarder);
             // Fall through to closed
         case openssl::SslConnection::Result::CLOSED:
-            m_state = State::CLOSED;
-            m_loop->removeException(handle);
-            m_socket.reset();
-            if (m_shutdown)
-            {
-                m_shutdown(*this);
-            }
+            close();
             break;
     }
 }
@@ -155,12 +149,11 @@ void ForwarderConnection::incoming(int handle)
                 }
             }
             break;
-        case openssl::SslConnection::Result::CLOSED:
-            close();
-            break;
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error reading from forwarder";
             m_config->setBad(m_forwarder);
+            // Fall through to closed
+        case openssl::SslConnection::Result::CLOSED:
             close();
             break;
     }
@@ -200,13 +193,7 @@ void ForwarderConnection::_shutdown(int handle)
         case openssl::SslConnection::Result::SUCCESS:
             // Fall through
         case openssl::SslConnection::Result::FATAL:
-            m_state = State::CLOSED;
-            m_loop->removeException(handle);
-            m_socket.reset();
-            if (m_shutdown)
-            {
-                m_shutdown(*this);
-            }
+            close();
             break;
     }
 }
@@ -248,12 +235,11 @@ void ForwarderConnection::outgoing(int handle)
             m_buffer.clear();
             m_loop->removeWrite(handle);
             break;
-        case openssl::SslConnection::Result::CLOSED:
-            close();
-            break;
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error writing to forwarder";
             m_config->setBad(m_forwarder);
+            // Fall through to closed
+        case openssl::SslConnection::Result::CLOSED:
             close();
             break;
     }
