@@ -145,9 +145,13 @@ SslConnection::Result SslConnection::doFunction(std::function<int(SSL*)> functio
     if (m_ssl)
     {
         int ret = function(m_ssl);
-        if (ret >= 0)
+        if (ret > 0)
         {
             result = Result::SUCCESS;
+        }
+        else if (ret == 0)
+        {
+            result = Result::CLOSED;
         }
         else
         {
