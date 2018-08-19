@@ -9,6 +9,7 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <sys/stat.h>
 #ifdef __linux__
 #include <sys/prctl.h>
 #endif
@@ -114,12 +115,16 @@ void daemonise()
     {
         exit(0);
     }
+    
+    // Don't get HUP'd by the executing terminal
+    if (setsid() == -1)
+    {
+        std::cerr << "Unable to become process leader to daemonise\n";
+        exit(1);
+    }
 
     // Ignore signal sent from the next child to this parent
     signal(SIGCHLD, SIG_IGN);
-    
-    // Don't get HUP'd by the executing terminal
-    (void) setsid();
 
     // Double fork so that the child becomes owned by PID 1
     pid = fork();
@@ -134,6 +139,16 @@ void daemonise()
     {
         exit(0);
     }
+
+    // Move to the root directory
+    if (chdir("/") == -1)
+    {
+        std::cerr << "Unable to move to the root directory to daemonise\n";
+        exit(1);
+    }
+
+    // Set the umask even though we don't create any files
+    (void) umask(0);
 
     // Close any file descriptors that are open
     for (int fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--)
