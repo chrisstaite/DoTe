@@ -182,8 +182,9 @@ int main(int argc, char* const argv[])
     // Daemonise if requested
     if (parser.daemonise())
     {
+        auto logger = std::make_shared<dote::SyslogLogger>();
         daemonise();
-        dote::Log::setLogger(std::make_shared<dote::SyslogLogger>());
+        dote::Log::setLogger(std::move(logger));
     }
 
     // Write the pid file if requested
