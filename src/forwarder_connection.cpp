@@ -122,6 +122,8 @@ void ForwarderConnection::connect(int handle)
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error handshaking with forwarder";
             m_config->setBad(m_forwarder);
+            // Fall through to closed
+        case openssl::SslConnection::Result::CLOSED:
             m_state = State::CLOSED;
             m_loop->removeException(handle);
             m_socket.reset();
@@ -152,6 +154,9 @@ void ForwarderConnection::incoming(int handle)
                     m_incoming(*this, std::move(buffer));
                 }
             }
+            break;
+        case openssl::SslConnection::Result::CLOSED:
+            close();
             break;
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error reading from forwarder";
@@ -190,6 +195,8 @@ void ForwarderConnection::_shutdown(int handle)
                 std::bind(&ForwarderConnection::_shutdown, this, _1)
             );
             break;
+        case openssl::SslConnection::Result::CLOSED:
+            // Fall through
         case openssl::SslConnection::Result::SUCCESS:
             // Fall through
         case openssl::SslConnection::Result::FATAL:
@@ -240,6 +247,9 @@ void ForwarderConnection::outgoing(int handle)
         case openssl::SslConnection::Result::SUCCESS:
             m_buffer.clear();
             m_loop->removeWrite(handle);
+            break;
+        case openssl::SslConnection::Result::CLOSED:
+            close();
             break;
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error writing to forwarder";

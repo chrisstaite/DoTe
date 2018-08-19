@@ -21,6 +21,8 @@ class ISslConnection
         NEED_WRITE,
         /// The function has completed its role
         SUCCESS,
+        /// The remote end has closed
+        CLOSED,
         /// There's no way that this is going to succeed,
         /// don't bother trying to call again
         FATAL

@@ -60,6 +60,8 @@ set(CommonSources
     include/i_logger.h
     include/syslog_logger.h
     src/syslog_logger.cpp
+    include/console_logger.h
+    src/console_logger.cpp
     include/ip_lookup.h
     src/ip_lookup.cpp
     include/dote.h

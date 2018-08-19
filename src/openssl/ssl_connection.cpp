@@ -145,7 +145,7 @@ SslConnection::Result SslConnection::doFunction(std::function<int(SSL*)> functio
     if (m_ssl)
     {
         int ret = function(m_ssl);
-        if (ret > 0)
+        if (ret >= 0)
         {
             result = Result::SUCCESS;
         }
@@ -159,6 +159,9 @@ SslConnection::Result SslConnection::doFunction(std::function<int(SSL*)> functio
                     break;
                 case SSL_ERROR_WANT_WRITE:
                     result = Result::NEED_WRITE;
+                    break;
+                case SSL_ERROR_ZERO_RETURN:
+                    result = Result::CLOSED;
                     break;
             }
         }

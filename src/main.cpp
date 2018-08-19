@@ -2,6 +2,7 @@
 #include "dote.h"
 #include "config_parser.h"
 #include "syslog_logger.h"
+#include "console_logger.h"
 #include "log.h"
 #include "pid_file.h"
 #include "ip_lookup.h"
@@ -148,7 +149,7 @@ void daemonise()
 int main(int argc, char* const argv[])
 {
     // Set up the logger
-    dote::Log::setLogger(std::make_shared<dote::SyslogLogger>());
+    dote::Log::setLogger(std::make_shared<dote::ConsoleLogger>());
 
     // Parse the configuration from the command line
     dote::ConfigParser parser(argc, argv);
@@ -182,6 +183,7 @@ int main(int argc, char* const argv[])
     if (parser.daemonise())
     {
         daemonise();
+        dote::Log::setLogger(std::make_shared<dote::SyslogLogger>());
     }
 
     // Write the pid file if requested
