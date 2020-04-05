@@ -3,14 +3,14 @@
 
 CHROOT_DIR=/tmp/mips-chroot
 MIRROR=http://ftp.us.debian.org/debian/
-VERSION=wheezy
+VERSION=stretch
 CHROOT_ARCH=mips
 
 # Debian package dependencies for the host
 HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
 
 # Debian package dependencies for the chrooted environment
-GUEST_DEPENDENCIES="build-essential libssl-dev cmake g++-4.7"
+GUEST_DEPENDENCIES="build-essential libssl-dev cmake g++"
 
 # Command used to run the tests
 TEST_COMMAND="make test"
