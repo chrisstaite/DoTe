@@ -112,12 +112,15 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
 {
     if (buffer.size() < 2)
     {
+        Log::warn << "Discarding response of length " << buffer.size();
         return;
     }
     unsigned short length =
         ntohs(*reinterpret_cast<unsigned short*>(buffer.data()));
     if (buffer.size() < length + 2)
     {
+        Log::warn << "Discarding response that had length " << length
+                  << " but size " << (buffer.size() - 2);
         return;
     }
 

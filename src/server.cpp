@@ -62,10 +62,12 @@ void Server::handleDnsRequest(int handle)
         return;
     }
 
-    char buffer[512];
+    constexpr size_t SIZE_LENGTH = sizeof(unsigned short);
+    constexpr size_t DNS_BUFFER = 512;
+    std::vector<char> tcpBuffer(DNS_BUFFER + SIZE_LENGTH);
     sockaddr_storage src_addr;
     iovec iov[1] = {
-        { buffer, sizeof(buffer) }
+        { tcpBuffer.data() + SIZE_LENGTH, tcpBuffer.size() - SIZE_LENGTH }
     };
     msghdr message = {
         &src_addr, sizeof(src_addr), iov, 1, 0, 0
@@ -85,10 +87,8 @@ void Server::handleDnsRequest(int handle)
 
     // Construct a TCP DNS request which is two bytes of length
     // followed by the DNS request packet
-    std::vector<char> tcpBuffer;
-    tcpBuffer.resize(count + 2);
+    tcpBuffer.resize(count + SIZE_LENGTH);
     *reinterpret_cast<unsigned short*>(tcpBuffer.data()) = htons(count);
-    std::copy(buffer, &buffer[count], tcpBuffer.begin() + 2);
 
     // Send the request
     m_forwarders->handleRequest(
