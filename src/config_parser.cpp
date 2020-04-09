@@ -320,7 +320,7 @@ void ConfigParser::defaultForwarders()
 {
     std::string hostname("cloudflare-dns.com");
     auto pin = openssl::Base64::decode(
-        "DPPP3G7LCnpidYBiFiN38CespymEvOsP1HCpoVVPtUM="
+        "RfCPB3CwpPi0fWbFCz4aALcT52bYHiuIAzR4+IJpYBU="
     );
     Forwarder a{{}, hostname, pin};
     if (parseServer("[2606:4700:4700::1111]", 853, a.remote))
