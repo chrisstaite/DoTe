@@ -7,7 +7,7 @@ VERSION=stretch
 CHROOT_ARCH=mips
 
 # Debian package dependencies for the host
-HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild"
+HOST_DEPENDENCIES="debootstrap qemu-user-static binfmt-support sbuild schroot"
 
 # Debian package dependencies for the chrooted environment
 GUEST_DEPENDENCIES="build-essential libssl-dev cmake g++"
@@ -18,6 +18,7 @@ TEST_COMMAND="make test"
 function setup_mips_chroot {
     # Host dependencies
     sudo apt-get update
+    sudo apt-get upgrade -qq -y
     sudo apt-get install -qq -y ${HOST_DEPENDENCIES}
 
     # Create chrooted environment
