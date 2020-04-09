@@ -3,12 +3,10 @@
 
 #include "i_ssl_connection.h"
 
+#include <openssl/ssl.h>
+
 #include <memory>
 #include <functional>
-
-typedef struct ssl_st SSL;
-typedef struct x509_st X509;
-typedef struct env_md_st EVP_MD;
 
 namespace dote {
 namespace openssl {

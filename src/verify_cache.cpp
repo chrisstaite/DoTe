@@ -2,6 +2,7 @@
 #include "verify_cache.h"
 
 #include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 
 namespace dote {
 
@@ -50,7 +51,7 @@ int VerifyCache::verify(X509_STORE_CTX* context)
 {
     int result = 0;
 
-    auto currentHash = getCertificate(context->cert);
+    auto currentHash = getCertificate(X509_STORE_CTX_get0_cert(context));
     auto now = std::chrono::steady_clock::now();
     if (now > m_expiry)
     {

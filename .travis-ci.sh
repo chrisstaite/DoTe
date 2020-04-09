@@ -33,8 +33,6 @@ function setup_mips_chroot {
     # Create file with environment variables which will be used inside chrooted
     # environment
     echo "export ARCH=${ARCH}" > envvars.sh
-    echo "export CC=gcc" >> envvars.sh
-    echo "export CXX=g++" >> envvars.sh
     echo "export TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}" >> envvars.sh
     chmod a+x envvars.sh
 

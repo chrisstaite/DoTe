@@ -1,12 +1,13 @@
 
 #pragma once
 
+#include <openssl/x509_vfy.h>
+
 #include <string>
 #include <functional>
 
 typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_session_st SSL_SESSION;
-typedef struct x509_store_ctx_st X509_STORE_CTX;
 
 namespace dote {
 namespace openssl {

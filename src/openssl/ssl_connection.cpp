@@ -3,7 +3,6 @@
 #include "openssl/context.h"
 #include "openssl/hostname_verifier.h"
 
-#include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
 

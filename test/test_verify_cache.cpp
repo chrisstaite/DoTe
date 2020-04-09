@@ -76,7 +76,7 @@ TEST_F(TestVerifyCache, TestPassDoesNotCallAgain)
     EXPECT_CALL(m_mockVerifier, verify(m_context))
         .WillOnce(Return(1));
     auto certificate(createCertificate());
-    m_context->cert = certificate.get();
+    X509_STORE_CTX_set_cert(m_context, certificate.release());
     EXPECT_EQ(1, cache.verify(m_context));
     EXPECT_EQ(1, cache.verify(m_context));
 }
@@ -88,7 +88,7 @@ TEST_F(TestVerifyCache, TestPassCallsAgainOnExpiry)
         .Times(2)
         .WillRepeatedly(Return(1));
     auto certificate(createCertificate());
-    m_context->cert = certificate.get();
+    X509_STORE_CTX_set_cert(m_context, certificate.release());
     EXPECT_EQ(1, cache.verify(m_context));
     EXPECT_EQ(1, cache.verify(m_context));
 }
