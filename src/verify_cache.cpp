@@ -8,21 +8,37 @@ namespace dote {
 
 namespace {
 
-std::vector<unsigned char> getCertificate(X509* certificate)
+#if OPENSSL_VERSION_NUMBER >= 0x010100000
+X509* certFromStore(X509_STORE_CTX* store)
+{
+    return X509_STORE_CTX_get0_cert(store);
+}
+#else
+X509* certFromStore(X509_STORE_CTX* store)
+{
+    return store->cert;
+}
+#endif
+
+std::vector<unsigned char> getCertificate(X509_STORE_CTX* store)
 {
     std::vector<unsigned char> hash;
     const EVP_MD* sha256 = EVP_sha256();
-    if (certificate && sha256)
+    if (store && sha256)
     {
-        hash.resize(EVP_MAX_MD_SIZE);
-        unsigned int length = hash.size();
-        if (X509_digest(certificate, sha256, hash.data(), &length) == 1)
+        X509* certificate = certFromStore(store);
+        if (certificate)
         {
-            hash.resize(length);
-        }
-        else
-        {
-            hash.clear();
+            hash.resize(EVP_MAX_MD_SIZE);
+            unsigned int length = hash.size();
+            if (X509_digest(certificate, sha256, hash.data(), &length) == 1)
+            {
+                hash.resize(length);
+            }
+            else
+            {
+                hash.clear();
+            }
         }
     }
     return hash;
@@ -51,7 +67,7 @@ int VerifyCache::verify(X509_STORE_CTX* context)
 {
     int result = 0;
 
-    auto currentHash = getCertificate(X509_STORE_CTX_get0_cert(context));
+    auto currentHash = getCertificate(context);
     auto now = std::chrono::steady_clock::now();
     if (now > m_expiry)
     {
