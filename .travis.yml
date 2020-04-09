@@ -8,6 +8,7 @@ matrix:
     - OUTPUT_BINARY="dote_linux"
 
   - os: linux
+    dist: bionic
     sudo: required
     env:
     - MATRIX_EVAL="" ARCH="mips"
