@@ -33,6 +33,11 @@ class IForwarderConfig
     ///
     /// \return  The invalid configuration marker
     virtual std::vector<ConfigParser::Forwarder>::const_iterator end() const = 0;
+
+    /// \brief  Get the number of seconds to wait until giving up on a connection
+    ///
+    /// \return  The number of seconds to have a connection open for
+    virtual unsigned int timeout() const = 0;
 };
 
 }  // namespace dote

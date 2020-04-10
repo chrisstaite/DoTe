@@ -95,6 +95,7 @@ void usage(const char* appName)
     std::cerr << "   -P --pid_file  filename   Write the PID of the process to a given file\n";
     std::cerr << "   -l --ip_lookup  IP        Lookup the hostname and certificate pin for\n";
     std::cerr << "                             an IP address and then exit.\n";
+    std::cerr << "   -t --timeout  timeout     The number of seconds to allow a forwarder\n";
     std::cerr << "\n";
 }
 

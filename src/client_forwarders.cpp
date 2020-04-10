@@ -38,6 +38,7 @@ void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
     }
     else
     {
+        Log::debug << "Queuing request, queue length is " << m_queue.size();
         m_queue.emplace_back(QueuedQuery {
             std::move(socket), client, std::move(request)
         });
@@ -90,6 +91,7 @@ void ClientForwarders::dequeue()
             std::move(front.request)
         );
         m_queue.pop_front();
+        Log::debug << "Sent request from queue, length now " << m_queue.size();
     }
 }
 
@@ -144,8 +146,6 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
     {
         Log::warn << "Unable to send response to DNS request";
     }
-
-    return;
 }
 
 }  // namespace dote

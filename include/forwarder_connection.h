@@ -122,6 +122,8 @@ class ForwarderConnection
     /// \brief  Remove from the looper and close
     void close();
 
+    /// The time to give up on this connection
+    time_t m_timeout;
     /// The looper used to manage the connection
     std::shared_ptr<ILoop> m_loop;
     /// The configuration for the available forwarders

@@ -9,8 +9,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <cerrno>
-#include <cstring>
 
 namespace dote {
 
@@ -36,13 +34,13 @@ bool Server::addServer(const ConfigParser::Server& config)
     auto serverSocket = Socket::bind(config.address, Socket::Type::UDP);
     if (!serverSocket)
     {
-        Log::err << "Bind failed: " << strerror(errno);
         return false;
     }
     m_serverSockets.emplace_back(std::move(serverSocket));
     m_loop->registerRead(
         m_serverSockets.back()->get(),
-        std::bind(&Server::handleDnsRequest, this, _1)
+        std::bind(&Server::handleDnsRequest, this, _1),
+        0
     );
     return true;
 }

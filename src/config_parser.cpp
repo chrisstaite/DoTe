@@ -29,7 +29,8 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     m_ciphers(),
     m_maxConnections(DEFAULT_MAX_CONNECTIONS),
     m_pidFile(),
-    m_daemonise(false)
+    m_daemonise(false),
+    m_timeout(5u)
 {
     m_ipLookup.ss_family = AF_UNSPEC;
     m_partialForwarder.remote.ss_family = AF_UNSPEC;
@@ -207,6 +208,26 @@ const sockaddr_storage& ConfigParser::ipLookup() const
     return m_ipLookup;
 }
 
+unsigned int ConfigParser::timeout() const
+{
+    return m_timeout;
+}
+
+void ConfigParser::setTimeout(const char *timeout)
+{
+    char *end;
+    long longTimeout = strtol(timeout, &end, 10);
+    if (*end || longTimeout < 1 || longTimeout > 0xffff)
+    {
+        // Invalid timeout
+        m_valid = false;
+    }
+    else
+    {
+        m_timeout = longTimeout;
+    }
+}
+
 void ConfigParser::parseConfig(int argc, char* const argv[])
 {
     int c;
@@ -220,9 +241,10 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
         {"daemonise", no_argument, nullptr, 'd'},
         {"pid_file", required_argument, nullptr, 'P'},
         {"ip_lookup", required_argument, nullptr, 'l'},
+        {"timeout", required_argument, nullptr, 't'},
         {nullptr, 0, nullptr, 0}
     };
-    while ((c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:l:", long_options, nullptr)) != -1)
+    while ((c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:l:t:", long_options, nullptr)) != -1)
     {
         switch (c)
         {
@@ -265,6 +287,10 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
                 {
                     m_valid = false;
                 }
+                break;
+            case 't':
+                // The number of seconds to allow a forwarder to reply to a lookup
+                setTimeout(optarg);
                 break;
             default:
                 // Unknown option

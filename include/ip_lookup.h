@@ -52,6 +52,8 @@ class IpLookup
     std::shared_ptr<Socket> m_socket;
     /// The connection that was made to the IP address
     std::shared_ptr<openssl::ISslConnection> m_connection;
+    /// The time at which the lookup will be considered failed
+    time_t m_timeout;
 };
 
 }  // namespace dote

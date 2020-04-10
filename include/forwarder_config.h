@@ -42,7 +42,19 @@ class ForwarderConfig : public IForwarderConfig
     /// \return  The invalid configuration marker
     std::vector<ConfigParser::Forwarder>::const_iterator end() const override;
 
+    /// \brief  Set the number of seconds a forwarder has to respond
+    ///
+    /// \param timeout  The number of seconds to wait for a forwarder
+    void setTimeout(unsigned int timeout);
+
+    /// \brief  Get the number of seconds to wait until giving up on a connection
+    ///
+    /// \return  The number of seconds to have a connection open for
+    unsigned int timeout() const override;
+
   private:
+    /// The number of seconds to have a connection open for
+    unsigned int m_timeout;
     /// The available forwarders that can be opened
     std::vector<ConfigParser::Forwarder> m_forwarders;
 };

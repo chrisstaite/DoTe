@@ -82,6 +82,11 @@ class ConfigParser
     /// \return  The path to write or an empty string not to
     const std::string& pidFile() const;
 
+    /// \brief  Get the number of seconds to wait until giving up on a connection
+    ///
+    /// \return  The number of seconds to have a connection open for
+    unsigned int timeout() const;
+
   private:
     /// \brief  Parse the configuration
     ///
@@ -147,6 +152,11 @@ class ConfigParser
     /// \param maxConnections  A decimal string with the maximum
     void setMaxConnections(const char* maxConnections);
 
+    /// \brief  Set the number of seconds a forwarder has to respond
+    ///
+    /// \param timeout  A decimal string with the timeout
+    void setTimeout(const char* timeout);
+
     /// Whether the parameters are valid
     bool m_valid;
     /// The currently being built forwarder
@@ -165,6 +175,8 @@ class ConfigParser
     std::string m_pidFile;
     /// Whether to fork and daemonise
     bool m_daemonise;
+    /// The number of seconds to allow a forwarder to respond
+    unsigned int m_timeout;
 };
 
 }  // namespace dote

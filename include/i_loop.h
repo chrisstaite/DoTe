@@ -19,17 +19,19 @@ class ILoop
     ///
     /// \param handle    The handle to register for reading
     /// \param callback  The callback to call if it triggers
+    /// \param timeout  The time at which to call exception on the handle
     ///
     /// \return  True if the handle is not already registered and now is
-    virtual bool registerRead(int handle, Callback callback) = 0;
+    virtual bool registerRead(int handle, Callback callback, time_t timeout) = 0;
 
     /// \brief   Register for write availability on a given handle
     ///
     /// \param handle    The handle to register for writing
     /// \param callback  The callback to call if it triggers
+    /// \param timeout  The time at which to call exception on the handle
     ///
     /// \return  True if the handle is not already registered and now is
-    virtual bool registerWrite(int handle, Callback callback) = 0;
+    virtual bool registerWrite(int handle, Callback callback, time_t timeout) = 0;
 
     /// \brief  Register for exceptions on a given handle
     ///

@@ -7,6 +7,7 @@
 namespace dote {
 
 ForwarderConfig::ForwarderConfig() :
+    m_timeout(5),
     m_forwarders()
 { }
 
@@ -36,6 +37,16 @@ void ForwarderConfig::setBad(const ConfigParser::Forwarder &config)
             break;
         }
     }
+}
+
+void ForwarderConfig::setTimeout(unsigned int timeout)
+{
+    m_timeout = timeout;
+}
+
+unsigned int ForwarderConfig::timeout() const
+{
+    return m_timeout;
 }
 
 }  // namespace dote

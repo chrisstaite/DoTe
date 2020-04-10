@@ -14,7 +14,8 @@ using namespace std::placeholders;
 IpLookup::IpLookup(const ConfigParser& config) :
     m_loop(std::make_shared<Loop>()),
     m_socket(Socket::connect(config.ipLookup(), Socket::Type::TCP)),
-    m_connection(nullptr)
+    m_connection(nullptr),
+    m_timeout(time(nullptr) + config.timeout())
 {
     std::shared_ptr<openssl::Context> context(
         std::make_shared<openssl::Context>(config.ciphers())
@@ -44,13 +45,15 @@ void IpLookup::connect(int handle)
         case openssl::SslConnection::Result::NEED_READ:
             m_loop->registerRead(
                 m_socket->get(),
-                std::bind(&IpLookup::connect, this, _1)
+                std::bind(&IpLookup::connect, this, _1),
+                m_timeout
             );
             break;
         case openssl::SslConnection::Result::NEED_WRITE:
             m_loop->registerWrite(
                 m_socket->get(),
-                std::bind(&IpLookup::connect, this, _1)
+                std::bind(&IpLookup::connect, this, _1),
+                m_timeout
             );
             break;
         default:

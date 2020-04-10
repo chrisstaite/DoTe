@@ -92,3 +92,7 @@ to do just that.  Simply call DoTe with the flag
 common name and certificate public key hash.  The
 IP may be IPv4 or IPv6 in square brackets, as when
 specifying the forwarder.
+
+By default, forwarders have 5 seconds to reply
+before the request is dropped.  This can be
+configured by using the `-t` option.

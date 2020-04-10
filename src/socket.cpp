@@ -1,5 +1,6 @@
 
 #include "socket.h"
+#include "log.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -118,6 +119,7 @@ std::shared_ptr<Socket> Socket::connect(const sockaddr_storage& address,
                 addressLength(address.ss_family)
             ))
     {
+        Log::info << "Connect failed: " << strerror(errno);
         socket.reset();
     }
     return socket;
@@ -134,6 +136,7 @@ std::shared_ptr<Socket> Socket::bind(const sockaddr_storage& address,
                 addressLength(address.ss_family)
             ))
     {
+        Log::info << "Bind failed: " << strerror(errno);
         socket.reset();
     }
     return socket;
