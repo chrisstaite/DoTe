@@ -86,7 +86,23 @@ class Loop : public ILoop
     ///
     /// \param handle  The handle to check and remove
     void cleanFd(int handle);
-    
+
+    /// \brief  Call a callback in a set of functions
+    ///
+    /// \param functions  The functions to lookup the callback in
+    /// \param handle  The handle to lookup in the functions
+    static void callCallback(
+        const std::map<int, std::pair<Callback, time_t>>& functions,
+        int handle);
+
+    /// \brief  Find the earliest timeout in the list of functions, calling exception if it has occurred
+    ///
+    /// \param now  The current time (to see if it has expired)
+    /// \param functions  The functions to find the earliest timeout in
+    ///
+    /// \return  The earliest timeout in the functions or 0 if there aren't any that haven't expired
+    time_t timeout(time_t now, std::map<int, std::pair<Callback, time_t>>& functions);
+
     /// \brief  Work out how long until a timeout
     ///
     /// \return  The number of milliseconds until the next timeout

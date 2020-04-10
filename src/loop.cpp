@@ -13,25 +13,28 @@ void Loop::run()
         {
             if ((fd.revents & POLLIN))
             {
-                auto func = m_readFunctions.find(fd.fd);
-                if (func != m_readFunctions.end())
-                {
-                    func->second.first(fd.fd);
-                }
+                callCallback(m_readFunctions, fd.fd);
             }
             if ((fd.revents & POLLOUT))
             {
-                auto func = m_writeFunctions.find(fd.fd);
-                if (func != m_writeFunctions.end())
-                {
-                    func->second.first(fd.fd);
-                }
+                callCallback(m_writeFunctions, fd.fd);
             }
             if ((fd.revents & ~(POLLIN | POLLOUT)))
             {
                 (void) raiseException(fd.fd);
             }
         }
+    }
+}
+
+void Loop::callCallback(
+        const std::map<int, std::pair<Callback, time_t>>& functions,
+        int handle)
+{
+    auto func = functions.find(handle);
+    if (func != functions.end())
+    {
+        func->second.first(handle);
     }
 }
 
@@ -143,50 +146,37 @@ void Loop::cleanFd(int handle)
     }
 }
 
+time_t Loop::timeout(time_t now, std::map<int, std::pair<Callback, time_t>>& functions)
+{
+    time_t earliest = 0u;
+    for (auto it = functions.begin(); it != functions.end();)
+    {
+        time_t thisTime = it->second.second;
+        if (thisTime != 0u && thisTime <= now && raiseException(it->first))
+        {
+            Log::info << "Timeout";
+            it = functions.erase(it);
+        }
+        else if (earliest == 0u || thisTime < earliest)
+        {
+            earliest = thisTime;
+            ++it;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+    return earliest;
+}
+
 int Loop::timeout()
 {
     time_t now = time(nullptr);
-    time_t earliest = 0u;
-
-    for (auto it = m_readFunctions.begin(); it != m_readFunctions.end();)
-    {
-        time_t thisTime = it->second.second;
-        if (thisTime != 0u && thisTime <= now && raiseException(it->first))
-        {
-            Log::info << "Timeout on read";
-            it = m_readFunctions.erase(it);
-        }
-        else if (earliest == 0u || thisTime < earliest)
-        {
-            earliest = thisTime;
-            ++it;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    for (auto it = m_writeFunctions.begin(); it != m_writeFunctions.end();)
-    {
-        time_t thisTime = it->second.second;
-        if (thisTime != 0u && thisTime <= now && raiseException(it->first))
-        {
-            Log::info << "Timeout on write";
-            it = m_writeFunctions.erase(it);
-        }
-        else if (earliest == 0u || thisTime < earliest)
-        {
-            earliest = thisTime;
-            ++it;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    if (earliest == 0)
+    time_t earliestRead = timeout(now, m_readFunctions);
+    time_t earliestWrite = timeout(now, m_writeFunctions);
+    time_t earliest = earliestRead < earliestWrite ? earliestRead : earliestWrite;
+    if (earliest == 0u)
     {
         return -1;
     }
