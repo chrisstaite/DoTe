@@ -2,12 +2,15 @@
 #include "loop.h"
 #include "log.h"
 
+#include <algorithm>
+
 namespace dote {
 
 void Loop::run()
 {
+    int currentTimeout = timeout();
     while (m_fds.size() > 0 &&
-            poll(&m_fds.front(), m_fds.size(), timeout()) >= 0)
+            poll(&m_fds.front(), m_fds.size(), currentTimeout) >= 0)
     {
         for (const auto& fd : m_fds)
         {
@@ -24,6 +27,7 @@ void Loop::run()
                 (void) raiseException(fd.fd);
             }
         }
+        currentTimeout = timeout();
     }
 }
 
@@ -149,13 +153,19 @@ void Loop::cleanFd(int handle)
 time_t Loop::timeout(time_t now, std::map<int, std::pair<Callback, time_t>>& functions)
 {
     time_t earliest = 0u;
+    std::vector<int> excepted;
     for (auto it = functions.begin(); it != functions.end();)
     {
         time_t thisTime = it->second.second;
-        if (thisTime != 0u && thisTime <= now && raiseException(it->first))
+        if (thisTime != 0u && thisTime <= now &&
+                std::find(excepted.begin(), excepted.end(), it->first) == excepted.end() &&
+                raiseException(it->first))
         {
             Log::info << "Timeout";
-            it = functions.erase(it);
+            // The iterator may have been invalidated by raiseException, so need to restart
+            // Log the fact we've handled it, so we don't get in an infinite loop
+            excepted.emplace_back(it->first);
+            it = functions.begin();
         }
         else if (earliest == 0u || thisTime < earliest)
         {
