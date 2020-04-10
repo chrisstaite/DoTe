@@ -17,6 +17,7 @@ class MockForwarderConfig : public IForwarderConfig
     MOCK_METHOD1(setBad, void(const ConfigParser::Forwarder&));
     MOCK_CONST_METHOD0(get, std::vector<ConfigParser::Forwarder>::const_iterator());
     MOCK_CONST_METHOD0(end, std::vector<ConfigParser::Forwarder>::const_iterator());
+    MOCK_CONST_METHOD0(timeout, unsigned int());
 };
 
 }  // namespace dote

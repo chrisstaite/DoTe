@@ -35,7 +35,7 @@ class TestServer : public ::testing::Test
   protected:
     void configureCallback()
     {
-        EXPECT_CALL(*m_loop, registerRead(_, _))
+        EXPECT_CALL(*m_loop, registerRead(_, _, _))
             .WillOnce(DoAll(SaveArg<0>(&m_handle), SaveArg<1>(&m_callback)));
         ASSERT_TRUE(m_server.addServer(m_config));
         ASSERT_TRUE(m_callback);
