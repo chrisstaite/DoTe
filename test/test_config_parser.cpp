@@ -536,6 +536,34 @@ TEST_F(TestConfigParser, IpLookupLong)
     EXPECT_EQ(expected, parser.ipLookup());
 }
 
+TEST_F(TestConfigParser, Timeout)
+{
+    const char* const args[] = { "", "-t", "1" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_TRUE(parser.valid());
+    EXPECT_EQ(1, parser.timeout());
+}
+
+TEST_F(TestConfigParser, TimeoutInvalid)
+{
+    const char* const args[] = { "", "-t", "a" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
+TEST_F(TestConfigParser, TimeoutTooSmall)
+{
+    const char* const args[] = { "", "-t", "0" };
+    ConfigParser parser(
+        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
+    );
+    EXPECT_FALSE(parser.valid());
+}
+
 TEST_F(TestConfigParser, UnknownOption)
 {
     const char* const args[] = { "", "-x", "a" };
