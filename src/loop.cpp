@@ -22,7 +22,7 @@ void Loop::run()
             {
                 callCallback(m_writeFunctions, fd.fd);
             }
-            if ((fd.revents & ~(POLLIN | POLLOUT)))
+            if ((fd.revents & (POLLERR | POLLHUP | POLLNVAL)))
             {
                 (void) raiseException(fd.fd);
             }
