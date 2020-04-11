@@ -5,6 +5,7 @@
 #include "i_forwarder_config.h"
 #include "log.h"
 #include "socket.h"
+#include "dns_packet.h"
 
 #include <arpa/inet.h>
 #include <functional>
@@ -53,7 +54,7 @@ void ClientForwarders::sendRequest(std::shared_ptr<Socket> socket,
         m_loop, m_config, m_ssl
     );
     // Send the request
-    if (connection->send(request))
+    if (connection->send(std::move(request)))
     {
         // On data, handle
         sockaddr_storage clientCopy = client;
@@ -112,22 +113,17 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
                                       const sockaddr_storage& client,
                                       std::vector<char> buffer)
 {
-    if (buffer.size() < 2)
+    DnsPacket packet(std::move(buffer));
+    if (!packet.valid())
     {
-        Log::warn << "Discarding response of length " << buffer.size();
+        Log::warn << "Discarding invalid response";
         return;
     }
-    unsigned short length =
-        ntohs(*reinterpret_cast<unsigned short*>(buffer.data()));
-    if (buffer.size() < length + 2)
-    {
-        Log::warn << "Discarding response that had length " << length
-                  << " but size " << (buffer.size() - 2);
-        return;
-    }
+    
+    (void) packet.removeEdnsPadding();
 
     struct iovec iov[1] {
-        { &buffer.data()[2], length }
+        { packet.data(), packet.length() }
     };
     socklen_t clientLength = 0;
     if (client.ss_family == AF_INET)

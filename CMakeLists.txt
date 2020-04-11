@@ -64,6 +64,8 @@ set(CommonSources
     src/console_logger.cpp
     include/ip_lookup.h
     src/ip_lookup.cpp
+    include/dns_packet.h
+    src/dns_packet.cpp
     include/dote.h
     src/dote.cpp)
 
@@ -95,6 +97,7 @@ set(TestSources
     test/parse_inet.cpp
     test/test_config_parser.cpp
     test/test_pid_file.cpp
+    test/test_dns_packet.cpp
     test/test_log.cpp)
 
 # Remove RTTI because we don't need it and it bloats the binary
