@@ -19,7 +19,7 @@
 namespace {
 
 /// The dote instance to use
-std::shared_ptr<dote::Dote> g_dote;
+std::unique_ptr<dote::Dote> g_dote;
 
 /// \brief  The signal handler that is called when the
 ///         server should be shutdown
@@ -196,7 +196,7 @@ int main(int argc, char* const argv[])
     }
 
     // Create the DoTe instance
-    g_dote = std::make_shared<dote::Dote>(parser);
+    g_dote.reset(new dote::Dote(parser));
 
     // Daemonise if requested
     if (parser.daemonise())
