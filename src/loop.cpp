@@ -12,7 +12,9 @@ void Loop::run()
     while (m_fds.size() > 0 &&
             poll(&m_fds.front(), m_fds.size(), currentTimeout) >= 0)
     {
-        for (const auto& fd : m_fds)
+        // Take a copy of m_fds so it's not invalidated
+        auto fds(m_fds);
+        for (const auto& fd : fds)
         {
             if ((fd.revents & POLLIN))
             {
