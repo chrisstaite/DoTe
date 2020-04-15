@@ -12,6 +12,28 @@
 namespace dote {
 namespace openssl {
 
+namespace {
+
+std::string toString(ASN1_STRING* string)
+{
+    if (string)
+    {
+        return std::string(
+            reinterpret_cast<const char*>(
+#if OPENSSL_VERSION_NUMBER >= 0x010100000
+                ASN1_STRING_get0_data(string)
+#else
+                ASN1_STRING_data(string)
+#endif
+            ),
+            ASN1_STRING_length(string)
+        );
+    }
+    return {};
+}
+
+}  // anon namespace
+
 using namespace std::placeholders;
 
 SslConnection::SslConnection(std::shared_ptr<Context> context) :
@@ -103,17 +125,7 @@ std::string SslConnection::getCommonName()
                 );
                 if (commonName)
                 {
-                    ASN1_STRING* commonNameString =
-                        X509_NAME_ENTRY_get_data(commonName);
-                    if (commonNameString)
-                    {
-                        result = std::string(
-                            reinterpret_cast<const char*>(
-                                ASN1_STRING_data(commonNameString)
-                            ),
-                            ASN1_STRING_length(commonNameString)
-                        );
-                    }
+                    result = toString(X509_NAME_ENTRY_get_data(commonName));
                 }
             }
         }

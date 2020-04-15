@@ -148,8 +148,15 @@ HostnameVerifier::~HostnameVerifier()
 bool HostnameVerifier::isNameValid(ASN1_STRING* name,
                                    const std::string &hostname)
 {
-    const char* utfName =
-        reinterpret_cast<char*>(ASN1_STRING_data(name));
+#if OPENSSL_VERSION_NUMBER >= 0x010100000
+    const char* utfName = reinterpret_cast<const char*>(
+        ASN1_STRING_get0_data(name)
+    );
+#else
+    const char* utfName = reinterpret_cast<const char*>(
+        ASN1_STRING_data(name)
+    );
+#endif
     size_t length = ASN1_STRING_length(name);
     return checkHostname(hostname, utfName, length);
 }
