@@ -68,25 +68,6 @@ class Loop : public ILoop
     void removeException(int handle) override;
 
   private:
-    /// \brief  Register a given handle with m_fds for the poll
-    ///
-    /// \param handle  The handle to register for events for
-    /// \param event   The event type to register for
-    void registerFd(int handle, short event);
-
-    /// \brief  Deregister a given handle with m_fds for the poll
-    ///
-    /// \param handle  The handle to deregister for events for
-    /// \param event   The event type to deregister for
-    void deregisterFd(int handle, short event);
-
-    /// \brief  If the handle doesn't exist in m_readFunctions,
-    ///         m_writeFunctions or m_exceptFunctions then remove
-    ///         it from m_fds.
-    ///
-    /// \param handle  The handle to check and remove
-    void cleanFd(int handle);
-
     /// \brief  Call a callback in a set of functions
     ///
     /// \param functions  The functions to lookup the callback in
@@ -115,14 +96,40 @@ class Loop : public ILoop
     /// \return  True if an exception handler existed for the handle and was called
     bool raiseException(int handle);
 
+    /// \brief  Populate a poll vector with handles in m_readFunctions,
+    ///         m_writeFunctions and m_exceptFunctions
+    ///
+    /// \param fds  The vector to populate
+    void populateFds(std::vector<pollfd>& fds);
+
+    /// \brief  Add the handles in the functions to the fds with the given event
+    ///
+    /// \tparam T  An ignored second parameter to the functions map
+    ///
+    /// \param fds  The fds to add handles to
+    /// \param functions  The functions to get the handles from
+    /// \param event  The event to add to fds if in functions
+    template<typename T>
+    static void popluateFds(std::vector<pollfd>& fds,
+                            const std::map<int, T>& functions,
+                            short event);
+
+    /// \brief  Reset the the poll events in the fds
+    ///
+    /// \param fds  The fds to clear all events for
+    static void clearFds(std::vector<pollfd>& fds);
+
+    /// \brief  Remove any fds with no events set and clear the POLLERR event
+    ///
+    /// \param fds  The fds to clear
+    static void removeFds(std::vector<pollfd>& fds);
+
     /// The read handles
     std::map<int, std::pair<Callback, time_t>> m_readFunctions;
     /// The write handles
     std::map<int, std::pair<Callback, time_t>> m_writeFunctions;
     /// The exception handles
     std::map<int, Callback> m_exceptFunctions;
-    /// The contraction of all the callback handles for use with poll
-    std::vector<pollfd> m_fds;
 };
 
 }  // namespace dote

@@ -9,11 +9,11 @@ namespace dote {
 void Loop::run()
 {
     int currentTimeout = timeout();
-    while (m_fds.size() > 0 &&
-            poll(&m_fds.front(), m_fds.size(), currentTimeout) >= 0)
+    std::vector<pollfd> fds;
+    populateFds(fds);
+    while (fds.size() > 0 &&
+            poll(&fds.front(), fds.size(), currentTimeout) >= 0)
     {
-        // Take a copy of m_fds so it's not invalidated
-        auto fds(m_fds);
         for (const auto& fd : fds)
         {
             if ((fd.revents & POLLIN))
@@ -29,7 +29,65 @@ void Loop::run()
                 (void) raiseException(fd.fd);
             }
         }
+        populateFds(fds);
         currentTimeout = timeout();
+    }
+}
+
+void Loop::populateFds(std::vector<pollfd>& fds)
+{
+    clearFds(fds);
+    popluateFds(fds, m_readFunctions, POLLIN);
+    popluateFds(fds, m_writeFunctions, POLLOUT);
+    popluateFds(fds, m_exceptFunctions, POLLERR);
+    removeFds(fds);
+}
+
+template<typename T>
+void Loop::popluateFds(std::vector<pollfd>& fds,
+                       const std::map<int, T>& functions,
+                       short event)
+{
+    for (auto& read : functions)
+    {
+        bool found = false;
+        for (auto& fd : fds)
+        {
+            if (fd.fd == read.first)
+            {
+                // Ignored by poll, but used by us
+                fd.events |= event;
+                found = true;
+            }
+        }
+        if (!found)
+        {
+            fds.emplace_back(pollfd { read.first, event, 0 });
+        }
+    }
+}
+
+void Loop::clearFds(std::vector<pollfd> &fds)
+{
+    for (auto& fd : fds)
+    {
+        fd.events = 0;
+    }
+}
+
+void Loop::removeFds(std::vector<pollfd> &fds)
+{
+    for (auto it = fds.begin(); it != fds.end();)
+    {
+        if (it->events == 0)
+        {
+            it = fds.erase(it);
+        }
+        else
+        {
+            it->events &= ~POLLERR;
+            ++it;
+        }
     }
 }
 
@@ -51,7 +109,6 @@ bool Loop::registerRead(int handle, Callback callback, time_t timeout)
         return false;
     }
 
-    registerFd(handle, POLLIN);
     m_readFunctions.insert({ handle, std::make_pair(std::move(callback), timeout) });
     return true;
 }
@@ -63,7 +120,6 @@ bool Loop::registerWrite(int handle, Callback callback, time_t timeout)
         return false;
     }
 
-    registerFd(handle, POLLOUT);
     m_writeFunctions.insert({ handle, std::make_pair(std::move(callback), timeout) });
     return true;
 }
@@ -76,80 +132,23 @@ bool Loop::registerException(int handle, Callback callback)
     }
 
     // Nothing to register for, poll always returns exceptions
-    registerFd(handle, 0);
     m_exceptFunctions.insert({ handle, std::move(callback) });
     return true;
-}
-
-void Loop::registerFd(int handle, short event)
-{
-    bool registered = false;
-    for (auto& fd : m_fds)
-    {
-        if (fd.fd == handle)
-        {
-            fd.events |= event;
-            registered = true;
-        }
-    }
-
-    if (!registered)
-    {
-        pollfd fd { handle, event, 0 };
-        m_fds.emplace_back(fd);
-    }
-}
-
-void Loop::deregisterFd(int handle, short event)
-{
-    for (auto& fd : m_fds)
-    {
-        if (fd.fd == handle)
-        {
-            fd.events &= ~event;
-        }
-    }
 }
 
 void Loop::removeRead(int handle)
 {
     m_readFunctions.erase(handle);
-    deregisterFd(handle, POLLIN);
-    cleanFd(handle);
 }
 
 void Loop::removeWrite(int handle)
 {
     m_writeFunctions.erase(handle);
-    deregisterFd(handle, POLLOUT);
-    cleanFd(handle);
 }
 
 void Loop::removeException(int handle)
 {
     m_exceptFunctions.erase(handle);
-    cleanFd(handle);
-}
-
-void Loop::cleanFd(int handle)
-{
-    if (m_readFunctions.count(handle) == 0 &&
-            m_writeFunctions.count(handle) == 0 &&
-            m_exceptFunctions.count(handle) == 0)
-    {
-        auto it = m_fds.begin();
-        while (it != m_fds.end())
-        {
-            if (it->fd == handle)
-            {
-                it = m_fds.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
-        }
-    }
 }
 
 time_t Loop::timeout(time_t now, std::map<int, std::pair<Callback, time_t>>& functions)
