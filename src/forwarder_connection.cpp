@@ -146,12 +146,9 @@ void ForwarderConnection::incoming(int handle)
             // Probably will be fine if we ignore this
             break;
         case openssl::SslConnection::Result::SUCCESS:
-            if (!buffer.empty())
+            if (!buffer.empty() && m_incoming)
             {
-                if (m_incoming)
-                {
-                    m_incoming(*this, std::move(buffer));
-                }
+                m_incoming(*this, std::move(buffer));
             }
             break;
         case openssl::SslConnection::Result::FATAL:

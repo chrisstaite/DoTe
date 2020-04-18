@@ -18,7 +18,7 @@ class SslFactory : public ISslFactory
     SslFactory(std::shared_ptr<Context> context);
 
     /// \brief  Required noexcept due to interface
-    ~SslFactory() noexcept;
+    ~SslFactory() = default;
 
     /// \brief  Create a new SSL connection
     ///

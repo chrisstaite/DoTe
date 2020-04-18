@@ -40,7 +40,7 @@ SslConnection::SslConnection(std::shared_ptr<Context> context) :
     m_context(std::move(context)),
     m_ssl(nullptr)
 {
-    if (m_context && m_context->get())
+    if (m_context)
     {
         m_ssl = SSL_new(m_context->get());
         SSL_SESSION* session = m_context->getSession();

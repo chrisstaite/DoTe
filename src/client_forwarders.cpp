@@ -119,7 +119,7 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
         Log::warn << "Discarding invalid response";
         return;
     }
-    
+
     (void) packet.removeEdnsPadding();
 
     struct iovec iov[1] {

@@ -55,7 +55,6 @@ void Loop::popluateFds(std::vector<pollfd>& fds,
         {
             if (fd.fd == read.first)
             {
-                // Ignored by poll, but used by us
                 fd.events |= event;
                 found = true;
             }

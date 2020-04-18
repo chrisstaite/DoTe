@@ -9,9 +9,6 @@ SslFactory::SslFactory(std::shared_ptr<Context> context) :
     m_context(std::move(context))
 { }
 
-SslFactory::~SslFactory() noexcept
-{ }
-
 std::shared_ptr<ISslConnection> SslFactory::create()
 {
     if (m_context)
