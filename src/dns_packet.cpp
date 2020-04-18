@@ -60,6 +60,10 @@ std::vector<char>::const_iterator skipName(
         {
             return current + 1u;
         }
+        else if ((*current & 0xc0) == 0xc0)
+        {
+            return current + 2u;
+        }
         else if (end - current > *current + 1u)
         {
             current += *current + 1u;
