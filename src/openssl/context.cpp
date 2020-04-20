@@ -3,6 +3,9 @@
 #include "openssl/context.h"
 
 #include <openssl/ssl.h>
+#include <openssl/engine.h>
+#include <openssl/err.h>
+#include <openssl/conf.h>
 
 namespace dote {
 namespace openssl {
@@ -59,6 +62,13 @@ Context::~Context()
     if (m_context)
     {
         SSL_CTX_free(m_context);
+        
+        FIPS_mode_set(0);
+        ENGINE_cleanup();
+        CONF_modules_unload(1);
+        EVP_cleanup();
+        CRYPTO_cleanup_all_ex_data();
+        ERR_free_strings();
     }
 }
 
