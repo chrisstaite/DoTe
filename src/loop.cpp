@@ -157,14 +157,16 @@ time_t Loop::timeout(time_t now, std::map<int, std::pair<Callback, time_t>>& fun
     for (auto it = functions.begin(); it != functions.end();)
     {
         time_t thisTime = it->second.second;
+        // Cache the handle so we can reference it after calling raiseException
+        int handle = it->first;
         if (thisTime != 0u && thisTime <= now &&
-                std::find(excepted.begin(), excepted.end(), it->first) == excepted.end() &&
-                raiseException(it->first))
+                std::find(excepted.begin(), excepted.end(), handle) == excepted.end() &&
+                raiseException(handle))
         {
             Log::info << "Timeout";
             // The iterator may have been invalidated by raiseException, so need to restart
             // Log the fact we've handled it, so we don't get in an infinite loop
-            excepted.emplace_back(it->first);
+            excepted.emplace_back(handle);
             it = functions.begin();
         }
         else if (earliest == 0u || thisTime < earliest)
