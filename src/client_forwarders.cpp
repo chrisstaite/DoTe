@@ -86,12 +86,15 @@ void ClientForwarders::dequeue()
     if (!m_queue.empty())
     {
         auto& front = m_queue.front();
-        sendRequest(
-            std::move(front.socket),
-            front.client,
-            std::move(front.request)
-        );
+        std::shared_ptr<Socket> socket = std::move(front.socket);
+        sockaddr_storage client = front.client;
+        std::vector<char> request = std::move(front.request);
         m_queue.pop_front();
+        sendRequest(
+            std::move(socket),
+            client,
+            std::move(request)
+        );
         Log::debug << "Sent request from queue, length now " << m_queue.size();
     }
 }
