@@ -96,11 +96,6 @@ int Context::verifyTrampoline(X509_STORE_CTX* store, void* context)
 
 void Context::cacheSession(SSL_SESSION* session)
 {
-    if (session == m_session)
-    {
-        return;
-    }
-
     if (m_session)
     {
         SSL_SESSION_free(m_session);
@@ -116,7 +111,9 @@ SSL_SESSION* Context::getSession()
 void Context::configureContext()
 {
     // Disable SSL v2 and v3 so we only use TLS
-    const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+    long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+    // Disable compression to reduce the memory footprint
+    flags |= SSL_OP_NO_COMPRESSION;
     SSL_CTX_set_options(m_context, flags);
 
     // Use the default verification paths
