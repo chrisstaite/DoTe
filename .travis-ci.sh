@@ -77,7 +77,7 @@ echo "Environment: $(uname -a)"
 mkdir ${TRAVIS_BUILD_DIR}/build
 cd ${TRAVIS_BUILD_DIR}/build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j
+make -j4
 
 echo "Running tests"
 make test && cp dote ../${OUTPUT_BINARY}
