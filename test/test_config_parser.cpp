@@ -109,14 +109,12 @@ class TestConfigParser : public ::testing::Test
 
 TEST_F(TestConfigParser, DefaultServers)
 {
-    const char* const args[] = { "" };
     std::vector<ConfigParser::Server> expected{
         { parse4("127.0.0.1", 53) },
         { parse6("::1", 53) }
     };
-    ConfigParser parser(
-        sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
-    );
+    ConfigParser parser;
+    parser.setDefaults();
     EXPECT_TRUE(parser.valid());
     EXPECT_EQ(expected, parser.servers());
 }
@@ -127,7 +125,8 @@ TEST_F(TestConfigParser, OneServerDefaultPort)
     std::vector<ConfigParser::Server> expected{
         { parse4("127.0.0.1", 53) }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -140,7 +139,8 @@ TEST_F(TestConfigParser, OneServer)
     std::vector<ConfigParser::Server> expected{
         {parse4("127.0.0.1", 5353) }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -150,7 +150,8 @@ TEST_F(TestConfigParser, OneServer)
 TEST_F(TestConfigParser, OneServerBadPort)
 {
     const char* const args[] = { "", "-s", "127.0.0.1:h5353" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -159,7 +160,8 @@ TEST_F(TestConfigParser, OneServerBadPort)
 TEST_F(TestConfigParser, OneServerInvalidPortHigh)
 {
     const char* const args[] = { "", "-s", "127.0.0.1:65536" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -168,7 +170,8 @@ TEST_F(TestConfigParser, OneServerInvalidPortHigh)
 TEST_F(TestConfigParser, OneServerInvalidPortLow)
 {
     const char* const args[] = { "", "-s", "127.0.0.1:0" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -180,7 +183,8 @@ TEST_F(TestConfigParser, OneServerIPv6DefaultPort)
     std::vector<ConfigParser::Server> expected{
         { parse6("::1", 53) }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -190,7 +194,8 @@ TEST_F(TestConfigParser, OneServerIPv6DefaultPort)
 TEST_F(TestConfigParser, MissingEndBracket)
 {
     const char* const args[] = { "", "-s", "[::1" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -199,7 +204,8 @@ TEST_F(TestConfigParser, MissingEndBracket)
 TEST_F(TestConfigParser, Ipv6WithoutBrackets)
 {
     const char* const args[] = { "", "-s", "::1" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -208,7 +214,8 @@ TEST_F(TestConfigParser, Ipv6WithoutBrackets)
 TEST_F(TestConfigParser, Ipv4WithBrackets)
 {
     const char* const args[] = { "", "-s", "[127.0.0.1]" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -220,7 +227,8 @@ TEST_F(TestConfigParser, OneServerIPv6)
     std::vector<ConfigParser::Server> expected{
         {parse6("::1", 5353) }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -231,9 +239,10 @@ TEST_F(TestConfigParser, OneServerIPv6Long)
 {
     const char* const args[] = { "", "--server", "[::1]:5353" };
     std::vector<ConfigParser::Server> expected{
-        {parse6("::1", 5353) }
+        { parse6("::1", 5353) }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -243,7 +252,8 @@ TEST_F(TestConfigParser, OneServerIPv6Long)
 TEST_F(TestConfigParser, OnlyHostname)
 {
     const char* const args[] = { "", "-h", "domain.com" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -252,7 +262,8 @@ TEST_F(TestConfigParser, OnlyHostname)
 TEST_F(TestConfigParser, OnlyPin)
 {
     const char* const args[] = { "", "-p", "AQ==" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -264,7 +275,8 @@ TEST_F(TestConfigParser, OneForwarderDefaultPort)
     std::vector<ConfigParser::Forwarder> expected{
         { parse4("1.1.1.1", 853), "", {} }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -277,7 +289,8 @@ TEST_F(TestConfigParser, OneForwarderWithPort)
     std::vector<ConfigParser::Forwarder> expected{
         { parse4("1.1.1.1", 8853), "", {} }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -290,7 +303,8 @@ TEST_F(TestConfigParser, OneForwarderWithHostname)
     std::vector<ConfigParser::Forwarder> expected{
         {parse4("1.1.1.1", 853), "domain.com", {} }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -303,7 +317,8 @@ TEST_F(TestConfigParser, OneForwarderWithHostnameLong)
     std::vector<ConfigParser::Forwarder> expected{
         {parse4("1.1.1.1", 853), "domain.com", {} }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -316,7 +331,8 @@ TEST_F(TestConfigParser, OneForwarderWithPin)
     std::vector<ConfigParser::Forwarder> expected{
         { parse4("1.1.1.1", 853), "", { 0x01 } }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -329,7 +345,8 @@ TEST_F(TestConfigParser, OneForwarderWithPinLong)
     std::vector<ConfigParser::Forwarder> expected{
         { parse4("1.1.1.1", 853), "", { 0x01 } }
     };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -339,7 +356,8 @@ TEST_F(TestConfigParser, OneForwarderWithPinLong)
 TEST_F(TestConfigParser, OneForwarderWithInvalidPin)
 {
     const char* const args[] = { "", "-f", "1.1.1.1", "-p", "*Q==" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -348,7 +366,8 @@ TEST_F(TestConfigParser, OneForwarderWithInvalidPin)
 TEST_F(TestConfigParser, OpenSSLCiphers)
 {
     const char* const args[] = { "", "-c", "ALL" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -358,7 +377,8 @@ TEST_F(TestConfigParser, OpenSSLCiphers)
 TEST_F(TestConfigParser, OpenSSLCiphersLong)
 {
     const char* const args[] = { "", "--ciphers", "ALL" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -368,7 +388,8 @@ TEST_F(TestConfigParser, OpenSSLCiphersLong)
 TEST_F(TestConfigParser, MaxConnectionsZero)
 {
     const char* const args[] = { "", "-m", "0" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -377,7 +398,8 @@ TEST_F(TestConfigParser, MaxConnectionsZero)
 TEST_F(TestConfigParser, MaxConnectionsLarge)
 {
     const char* const args[] = { "", "-m", "6001" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -386,7 +408,8 @@ TEST_F(TestConfigParser, MaxConnectionsLarge)
 TEST_F(TestConfigParser, MaxConnectionsBadStart)
 {
     const char* const args[] = { "", "-m", "h6001" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -395,7 +418,8 @@ TEST_F(TestConfigParser, MaxConnectionsBadStart)
 TEST_F(TestConfigParser, MaxConnectionsBadEnd)
 {
     const char* const args[] = { "", "-m", "6001h" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -404,7 +428,8 @@ TEST_F(TestConfigParser, MaxConnectionsBadEnd)
 TEST_F(TestConfigParser, MaxConnectionsOne)
 {
     const char* const args[] = { "", "-m", "1" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -414,7 +439,8 @@ TEST_F(TestConfigParser, MaxConnectionsOne)
 TEST_F(TestConfigParser, MaxConnectionsOneLong)
 {
     const char* const args[] = { "", "--connections", "1" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -424,7 +450,8 @@ TEST_F(TestConfigParser, MaxConnectionsOneLong)
 TEST_F(TestConfigParser, MaxConnectionsTen)
 {
     const char* const args[] = { "", "-m", "10" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -434,7 +461,8 @@ TEST_F(TestConfigParser, MaxConnectionsTen)
 TEST_F(TestConfigParser, Daemonise)
 {
     const char* const args[] = { "", "-d" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -444,7 +472,8 @@ TEST_F(TestConfigParser, Daemonise)
 TEST_F(TestConfigParser, DaemoniseLong)
 {
     const char* const args[] = { "", "--daemonise" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -454,7 +483,8 @@ TEST_F(TestConfigParser, DaemoniseLong)
 TEST_F(TestConfigParser, NotDaemoniseDefault)
 {
     const char* const args[] = { "" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -464,7 +494,8 @@ TEST_F(TestConfigParser, NotDaemoniseDefault)
 TEST_F(TestConfigParser, PidFile)
 {
     const char* const args[] = { "", "-P", "pidfile" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -474,7 +505,8 @@ TEST_F(TestConfigParser, PidFile)
 TEST_F(TestConfigParser, PidFileLong)
 {
     const char* const args[] = { "", "--pid_file", "pidfile" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -485,7 +517,8 @@ TEST_F(TestConfigParser, IpLookupV4)
 {
     sockaddr_storage expected = parse4("127.0.0.1", 5353);
     const char* const args[] = { "", "-l", "127.0.0.1:5353" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -496,7 +529,8 @@ TEST_F(TestConfigParser, IpLookupV6)
 {
     sockaddr_storage expected = parse6("::1", 5353);
     const char* const args[] = { "", "-l", "[::1]:5353" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -507,7 +541,8 @@ TEST_F(TestConfigParser, IpLookupV4DefaultPort)
 {
     sockaddr_storage expected = parse4("127.0.0.1", 853);
     const char* const args[] = { "", "-l", "127.0.0.1" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -518,7 +553,8 @@ TEST_F(TestConfigParser, IpLookupV6DefaultPort)
 {
     sockaddr_storage expected = parse6("::1", 853);
     const char* const args[] = { "", "-l", "[::1]" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -529,7 +565,8 @@ TEST_F(TestConfigParser, IpLookupLong)
 {
     sockaddr_storage expected = parse6("::1", 5353);
     const char* const args[] = { "", "-l", "[::1]:5353" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -539,7 +576,8 @@ TEST_F(TestConfigParser, IpLookupLong)
 TEST_F(TestConfigParser, Timeout)
 {
     const char* const args[] = { "", "-t", "1" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_TRUE(parser.valid());
@@ -549,7 +587,8 @@ TEST_F(TestConfigParser, Timeout)
 TEST_F(TestConfigParser, TimeoutInvalid)
 {
     const char* const args[] = { "", "-t", "a" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -558,7 +597,8 @@ TEST_F(TestConfigParser, TimeoutInvalid)
 TEST_F(TestConfigParser, TimeoutTooSmall)
 {
     const char* const args[] = { "", "-t", "0" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());
@@ -567,7 +607,8 @@ TEST_F(TestConfigParser, TimeoutTooSmall)
 TEST_F(TestConfigParser, UnknownOption)
 {
     const char* const args[] = { "", "-x", "a" };
-    ConfigParser parser(
+    ConfigParser parser;
+    parser.parseConfig(
         sizeof(args) / sizeof(args[0]), const_cast<char* const*>(args)
     );
     EXPECT_FALSE(parser.valid());

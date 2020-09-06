@@ -6,6 +6,7 @@
 #include "log.h"
 #include "pid_file.h"
 #include "ip_lookup.h"
+#include "vyatta.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -163,6 +164,12 @@ void daemonise()
     stderr = fopen("/dev/null", "w+");
 }
 
+void loadVyatta(dote::ConfigParser& parser)
+{
+    dote::Vyatta vyatta;
+    vyatta.loadConfig(parser);
+}
+
 }  // anon namespace
 
 int main(int argc, char* const argv[])
@@ -171,7 +178,10 @@ int main(int argc, char* const argv[])
     dote::Log::setLogger(std::make_shared<dote::ConsoleLogger>());
 
     // Parse the configuration from the command line
-    dote::ConfigParser parser(argc, argv);
+    dote::ConfigParser parser;
+    loadVyatta(parser);
+    parser.parseConfig(argc, argv);
+    parser.setDefaults();
     if (!parser.valid())
     {
         usage(argv[0]);

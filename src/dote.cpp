@@ -36,9 +36,6 @@ Dote::Dote(const ConfigParser& config) :
     m_context->setVerifier(std::bind(&VerifyCache::verify, &m_cache, _1));
 }
 
-Dote::~Dote()
-{ }
-
 bool Dote::listen(const ConfigParser& config)
 {
     bool result = true;

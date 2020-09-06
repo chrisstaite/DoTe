@@ -34,7 +34,7 @@ class Dote
     Dote& operator=(const Dote&) = delete;
 
     /// \brief  Shut down the server
-    ~Dote();
+    ~Dote() = default;
     
     /// \brief  Start listening on the server ports
     ///

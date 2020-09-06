@@ -20,7 +20,7 @@ constexpr std::size_t DEFAULT_MAX_CONNECTIONS = 5u;
 
 }  // anon namespace
 
-ConfigParser::ConfigParser(int argc, char* const argv[]) :
+ConfigParser::ConfigParser() :
     m_valid(true),
     m_partialForwarder(),
     m_forwarders(),
@@ -31,12 +31,10 @@ ConfigParser::ConfigParser(int argc, char* const argv[]) :
     m_pidFile(),
     m_daemonise(false),
     m_timeout(5u)
+{ }
+
+void ConfigParser::setDefaults()
 {
-    m_ipLookup.ss_family = AF_UNSPEC;
-    m_partialForwarder.remote.ss_family = AF_UNSPEC;
-
-    parseConfig(argc, argv);
-
     // Add the defaults
     if (m_forwarders.empty())
     {
@@ -244,7 +242,13 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
         {"timeout", required_argument, nullptr, 't'},
         {nullptr, 0, nullptr, 0}
     };
-    while ((c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:l:t:", long_options, nullptr)) != -1)
+
+    m_ipLookup.ss_family = AF_UNSPEC;
+    m_partialForwarder.remote.ss_family = AF_UNSPEC;
+    optind = 0;
+
+    while (m_valid &&
+           (c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:l:t:", long_options, nullptr)) != -1)
     {
         switch (c)
         {

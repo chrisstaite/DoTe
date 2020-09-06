@@ -66,6 +66,8 @@ set(CommonSources
     src/ip_lookup.cpp
     include/dns_packet.h
     src/dns_packet.cpp
+    include/vyatta.h
+    src/vyatta.cpp
     include/dote.h
     src/dote.cpp)
 
@@ -115,7 +117,7 @@ else()
     include_directories(${OPENSSL_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
-target_link_libraries(dote_static ${OPENSSL_LIBRARIES})
+target_link_libraries(dote_static ${OPENSSL_LIBRARIES} dl)
 
 # Strip release
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE

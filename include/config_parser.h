@@ -34,10 +34,19 @@ class ConfigParser
     ///
     /// \param argc  The number of arguments in argv
     /// \param argv  The parameters passed in
-    ConfigParser(int argc, char* const argv[]);
+    ConfigParser();
 
     ConfigParser(const ConfigParser&) = delete;
     ConfigParser& operator=(const ConfigParser&) = delete;
+    
+    /// \brief  Parse the configuration
+    ///
+    /// \param argc  The number of arguments in argv
+    /// \param argv  The parameters passed in
+    void parseConfig(int argc, char* const argv[]);
+
+    /// \brief  Set the defaults if there is nothing configured for forwarder, server or cipher
+    void setDefaults();
 
     /// \brief  Whether the parameters were valid or not
     ///
@@ -88,12 +97,6 @@ class ConfigParser
     unsigned int timeout() const;
 
   private:
-    /// \brief  Parse the configuration
-    ///
-    /// \param argc  The number of arguments in argv
-    /// \param argv  The parameters passed in
-    void parseConfig(int argc, char* const argv[]);
-
     /// \brief  Set the default forwarders
     void defaultForwarders();
 
