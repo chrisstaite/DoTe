@@ -11,6 +11,11 @@ ForwarderConfig::ForwarderConfig() :
     m_forwarders()
 { }
 
+void ForwarderConfig::clear()
+{
+    m_forwarders.clear();
+}
+
 void ForwarderConfig::addForwarder(const ConfigParser::Forwarder& config)
 {
     m_forwarders.push_back(config);

@@ -35,9 +35,6 @@ class ConfigParser
     /// \param argc  The number of arguments in argv
     /// \param argv  The parameters passed in
     ConfigParser();
-
-    ConfigParser(const ConfigParser&) = delete;
-    ConfigParser& operator=(const ConfigParser&) = delete;
     
     /// \brief  Parse the configuration
     ///

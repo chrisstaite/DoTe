@@ -43,6 +43,11 @@ class Dote
     /// \return  True if all the ports were bound
     bool listen(const ConfigParser& config);
 
+    /// \brief  Set the forwarders up to send requests to, done on construction
+    ///
+    /// \param config  The configuration of the forwarders to load
+    void setForwarders(const ConfigParser& config);
+
     /// \brief  Run the server
     void run();
 

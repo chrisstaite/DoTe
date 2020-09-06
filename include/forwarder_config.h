@@ -21,6 +21,9 @@ class ForwarderConfig : public IForwarderConfig
     /// \brief  Has to be noexcept as override
     ~ForwarderConfig() noexcept = default;
 
+    /// \brief  Clear the forwarders
+    void clear();
+
     /// \brief  Add a DNS server to forward to
     ///
     /// \param config  The configuration to add

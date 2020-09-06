@@ -1,6 +1,7 @@
 
 #include "vyatta.h"
 #include "config_parser.h"
+#include "log.h"
 
 #include <dlfcn.h>
 
@@ -29,6 +30,14 @@ Vyatta::Vyatta() :
         {
             m_config = init();
         }
+        if (!m_config)
+        {
+            Log::err << "Unable to load VyOS configuration";
+        }
+    }
+    else
+    {
+        Log::info << "Not running on VyOS, config through parameters";
     }
 }
 

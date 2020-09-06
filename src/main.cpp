@@ -164,10 +164,25 @@ void daemonise()
     stderr = fopen("/dev/null", "w+");
 }
 
-void loadVyatta(dote::ConfigParser& parser)
+dote::ConfigParser loadVyatta(dote::ConfigParser parser)
 {
     dote::Vyatta vyatta;
     vyatta.loadConfig(parser);
+    parser.setDefaults();
+    return parser;
+}
+
+void reloadConfiguration(const dote::ConfigParser& parser)
+{
+    dote::ConfigParser config(parser);
+    dote::Vyatta vyatta;
+    vyatta.loadConfig(config);
+    config.setDefaults();
+    if (config.valid())
+    {
+        // Can't re-set listen because we dropped priviledges
+        g_dote->setForwarders(config);
+    }
 }
 
 }  // anon namespace
@@ -178,10 +193,9 @@ int main(int argc, char* const argv[])
     dote::Log::setLogger(std::make_shared<dote::ConsoleLogger>());
 
     // Parse the configuration from the command line
-    dote::ConfigParser parser;
-    loadVyatta(parser);
-    parser.parseConfig(argc, argv);
-    parser.setDefaults();
+    dote::ConfigParser clParser;
+    clParser.parseConfig(argc, argv);
+    dote::ConfigParser parser(loadVyatta(clParser));
     if (!parser.valid())
     {
         usage(argv[0]);
@@ -236,6 +250,8 @@ int main(int argc, char* const argv[])
     (void) signal(SIGINT, &shutdownHandler);
     (void) signal(SIGTERM, &shutdownHandler);
 
+    // TODO: Run reloadConfiguration if /config/config.boot changes
+    
     // Start the event loop
     g_dote->run();
 

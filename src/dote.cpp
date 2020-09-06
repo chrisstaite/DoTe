@@ -28,12 +28,18 @@ Dote::Dote(const ConfigParser& config) :
     m_server(nullptr),
     m_cache(&X509_verify_cert, CACHE_SECONDS)
 {
+    setForwarders(config);
+    m_config->setTimeout(config.timeout());
+    m_context->setVerifier(std::bind(&VerifyCache::verify, &m_cache, _1));
+}
+
+void Dote::setForwarders(const ConfigParser& config)
+{
+    m_config->clear();
     for (const auto& forwarderConfig : config.forwarders())
     {
         m_config->addForwarder(forwarderConfig);
     }
-    m_config->setTimeout(config.timeout());
-    m_context->setVerifier(std::bind(&VerifyCache::verify, &m_cache, _1));
 }
 
 bool Dote::listen(const ConfigParser& config)
