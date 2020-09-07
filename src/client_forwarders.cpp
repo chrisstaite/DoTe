@@ -16,6 +16,73 @@
 
 namespace dote {
 
+namespace {
+
+/// \brief  Add the source address to the outgoing message
+///
+/// \param message  The outgoing message to add the address to
+/// \param server   The address to send the message from
+/// \param interface  The interface to send from or -1
+void addSourceAddress(struct msghdr& message, const sockaddr_storage& server, int interface)
+{
+    cmsghdr* controlMsg = nullptr;
+    if (server.ss_family == AF_INET6)
+    {
+#if defined(IPV6_RECVPKTINFO) || defined(IPV6_PKTINFO)
+        message.msg_controllen = CMSG_SPACE(sizeof(in6_pktinfo));
+
+        controlMsg = CMSG_FIRSTHDR(&message);
+        controlMsg->cmsg_level = IPPROTO_IPV6;
+#ifdef IPV6_PKTINFO
+        controlMsg->cmsg_type = IPV6_PKTINFO;
+#else
+        controlMsg->cmsg_type = IPV6_RECVPKTINFO;
+#endif
+        controlMsg->cmsg_len = CMSG_LEN(sizeof(in6_pktinfo));
+
+        auto packet = reinterpret_cast<in6_pktinfo*>(CMSG_DATA(controlMsg));
+        memset(packet, 0, sizeof(*packet));
+        packet->ipi6_addr = reinterpret_cast<const sockaddr_in6*>(&server)->sin6_addr;
+        packet->ipi6_ifindex = interface;
+
+        message.msg_controllen = controlMsg->cmsg_len;
+#endif
+    }
+    else if (server.ss_family == AF_INET)
+    {
+#ifdef IP_PKTINFO
+        message.msg_controllen = CMSG_SPACE(sizeof(in_pktinfo));
+
+        controlMsg = CMSG_FIRSTHDR(&message);
+        controlMsg->cmsg_level = IPPROTO_IP;
+        controlMsg->cmsg_type = IP_PKTINFO;
+        controlMsg->cmsg_len = CMSG_LEN(sizeof(in_pktinfo));
+
+        auto packet = reinterpret_cast<in_pktinfo*>(CMSG_DATA(controlMsg));
+        memset(packet, 0, sizeof(*packet));
+        packet->ipi_spec_dst = reinterpret_cast<const sockaddr_in*>(&server)->sin_addr;
+        packet->ipi_ifindex = interface;
+
+        message.msg_controllen = controlMsg->cmsg_len;
+#endif
+#ifdef IP_SENDSRCADDR
+        message.msg_controllen = CMSG_SPACE(sizeof(in_addr));
+
+        controlMsg = CMSG_FIRSTHDR(&message);
+        controlMsg->cmsg_level = IPPROTO_IP;
+        controlMsg->cmsg_type = IP_SENDSRCADDR;
+        controlMsg->cmsg_len = CMSG_LEN(sizeof(in_addr));
+
+        auto in = reinterpret_cast<in_addr*>(CMSG_DATA(controlMsg));
+        *in = reinterpret_cast<const sockaddr_in*>(&server)->sin_addr;
+
+        message.msg_controllen = controlMsg->cmsg_len;
+#endif
+    }
+}
+
+}  // anon namespace
+
 using namespace std::placeholders;
 
 ClientForwarders::ClientForwarders(std::shared_ptr<ILoop> loop,
@@ -160,66 +227,10 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
     char controlBuf[256];
     struct msghdr message {
         const_cast<sockaddr_storage*>(&client),
-        clientLength, iov, 1, nullptr, 0, 0
+        clientLength, iov, 1, controlBuf, 0, 0
     };
 
-    cmsghdr* controlMsg = nullptr;
-    if (server.ss_family == AF_INET6)
-    {
-#if defined(IPV6_RECVPKTINFO) || defined(IPV6_PKTINFO)
-        message.msg_control = controlBuf;
-        message.msg_controllen = CMSG_SPACE(sizeof(in6_pktinfo));
-
-        controlMsg = CMSG_FIRSTHDR(&message);
-        controlMsg->cmsg_level = IPPROTO_IPV6;
-#ifdef IPV6_PKTINFO
-        controlMsg->cmsg_type = IPV6_PKTINFO;
-#else
-        controlMsg->cmsg_type = IPV6_RECVPKTINFO;
-#endif
-        controlMsg->cmsg_len = CMSG_LEN(sizeof(in6_pktinfo));
-
-        auto packet = reinterpret_cast<in6_pktinfo*>(CMSG_DATA(controlMsg));
-        memset(packet, 0, sizeof(*packet));
-        packet->ipi6_addr = reinterpret_cast<const sockaddr_in6*>(&server)->sin6_addr;
-        packet->ipi6_ifindex = interface;
-
-        message.msg_controllen = controlMsg->cmsg_len;
-#endif
-    }
-    else if (server.ss_family == AF_INET)
-    {
-#ifdef IP_PKTINFO
-        message.msg_control = controlBuf;
-        message.msg_controllen = CMSG_SPACE(sizeof(in_pktinfo));
-
-        controlMsg = CMSG_FIRSTHDR(&message);
-        controlMsg->cmsg_level = IPPROTO_IP;
-        controlMsg->cmsg_type = IP_PKTINFO;
-        controlMsg->cmsg_len = CMSG_LEN(sizeof(in_pktinfo));
-
-        auto packet = reinterpret_cast<in_pktinfo*>(CMSG_DATA(controlMsg));
-        memset(packet, 0, sizeof(*packet));
-        packet->ipi_spec_dst = reinterpret_cast<const sockaddr_in*>(&server)->sin_addr;
-        packet->ipi_ifindex = interface;
-
-        message.msg_controllen = controlMsg->cmsg_len;
-#endif
-#ifdef IP_SENDSRCADDR
-        message.msg_control = controlBuf;
-        message.msg_controllen = CMSG_SPACE(sizeof(in_addr));
-
-        controlMsg = CMSG_FIRSTHDR(&message);
-        controlMsg->cmsg_level = IPPROTO_IP;
-        controlMsg->cmsg_type = IP_SENDSRCADDR;
-        controlMsg->cmsg_len = CMSG_LEN(sizeof(in_addr));
-
-        auto in = reinterpret_cast<in_addr*>(CMSG_DATA(controlMsg));
-        *in = reinterpret_cast<const sockaddr_in*>(&server)->sin_addr;
-
-        message.msg_controllen = controlMsg->cmsg_len;
-#endif
-    }
+    addSourceAddress(message, server, interface);
 
     if (sendmsg(socket->get(), &message, 0) == -1)
     {
