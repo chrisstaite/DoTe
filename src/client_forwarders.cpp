@@ -7,6 +7,10 @@
 #include "socket.h"
 #include "dns_packet.h"
 
+#ifdef __APPLE__
+#define __APPLE_USE_RFC_3542
+#endif
+
 #include <arpa/inet.h>
 #include <functional>
 
@@ -31,23 +35,29 @@ ClientForwarders::~ClientForwarders() noexcept
 
 void ClientForwarders::handleRequest(std::shared_ptr<Socket> socket,
                                      const sockaddr_storage& client,
+                                     const sockaddr_storage& server,
+                                     int interface,
                                      std::vector<char> request)
 {
     if (m_forwarders.size() < m_maxConnections)
     {
-        sendRequest(std::move(socket), client, std::move(request));
+        sendRequest(
+            std::move(socket), client, server, interface, std::move(request)
+        );
     }
     else
     {
         Log::debug << "Queuing request, queue length is " << m_queue.size();
         m_queue.emplace_back(QueuedQuery {
-            std::move(socket), client, std::move(request)
+            std::move(socket), client, server, interface, std::move(request)
         });
     }
 }
 
 void ClientForwarders::sendRequest(std::shared_ptr<Socket> socket,
                                    const sockaddr_storage& client,
+                                   const sockaddr_storage& server,
+                                   int interface,
                                    std::vector<char> request)
 {
     auto connection = std::make_shared<ForwarderConnection>(
@@ -58,11 +68,15 @@ void ClientForwarders::sendRequest(std::shared_ptr<Socket> socket,
     {
         // On data, handle
         sockaddr_storage clientCopy = client;
+        sockaddr_storage serverCopy = server;
         connection->setIncomingCallback(
-            [this, socket, clientCopy](ForwarderConnection& connection,
-                                       std::vector<char> buffer)
+            [this, socket, clientCopy, serverCopy, interface](
+                    ForwarderConnection& connection,
+                    std::vector<char> buffer)
             {
-                handleIncoming(socket, clientCopy, std::move(buffer));
+                handleIncoming(
+                    socket, clientCopy, serverCopy, interface, std::move(buffer)
+                );
                 // Shutdown after result
                 connection.shutdown();
             }
@@ -88,11 +102,15 @@ void ClientForwarders::dequeue()
         auto& front = m_queue.front();
         std::shared_ptr<Socket> socket = std::move(front.socket);
         sockaddr_storage client = front.client;
+        sockaddr_storage server = front.server;
+        int interface = front.interface;
         std::vector<char> request = std::move(front.request);
         m_queue.pop_front();
         sendRequest(
             std::move(socket),
             client,
+            server,
+            interface,
             std::move(request)
         );
         Log::debug << "Sent request from queue, length now " << m_queue.size();
@@ -114,6 +132,8 @@ void ClientForwarders::handleShutdown(ForwarderConnection& connection)
 
 void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
                                       const sockaddr_storage& client,
+                                      const sockaddr_storage& server,
+                                      int interface,
                                       std::vector<char> buffer)
 {
     DnsPacket packet(std::move(buffer));
@@ -137,10 +157,70 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
     {
         clientLength = sizeof(sockaddr_in6);
     }
+    char controlBuf[256];
     struct msghdr message {
         const_cast<sockaddr_storage*>(&client),
-        clientLength, iov, 1, 0, 0
+        clientLength, iov, 1, nullptr, 0, 0
     };
+
+    cmsghdr* controlMsg = nullptr;
+    if (server.ss_family == AF_INET6)
+    {
+#if defined(IPV6_RECVPKTINFO) || defined(IPV6_PKTINFO)
+        message.msg_control = controlBuf;
+        message.msg_controllen = CMSG_SPACE(sizeof(in6_pktinfo));
+
+        controlMsg = CMSG_FIRSTHDR(&message);
+        controlMsg->cmsg_level = IPPROTO_IPV6;
+#ifdef IPV6_PKTINFO
+        controlMsg->cmsg_type = IPV6_PKTINFO;
+#else
+        controlMsg->cmsg_type = IPV6_RECVPKTINFO;
+#endif
+        controlMsg->cmsg_len = CMSG_LEN(sizeof(in6_pktinfo));
+
+        auto packet = reinterpret_cast<in6_pktinfo*>(CMSG_DATA(controlMsg));
+        memset(packet, 0, sizeof(*packet));
+        packet->ipi6_addr = reinterpret_cast<const sockaddr_in6*>(&server)->sin6_addr;
+        packet->ipi6_ifindex = interface;
+
+        message.msg_controllen = controlMsg->cmsg_len;
+#endif
+    }
+    else if (server.ss_family == AF_INET)
+    {
+#ifdef IP_PKTINFO
+        message.msg_control = controlBuf;
+        message.msg_controllen = CMSG_SPACE(sizeof(in_pktinfo));
+
+        controlMsg = CMSG_FIRSTHDR(&message);
+        controlMsg->cmsg_level = IPPROTO_IP;
+        controlMsg->cmsg_type = IP_PKTINFO;
+        controlMsg->cmsg_len = CMSG_LEN(sizeof(in_pktinfo));
+
+        auto packet = reinterpret_cast<in_pktinfo*>(CMSG_DATA(controlMsg));
+        memset(packet, 0, sizeof(*packet));
+        packet->ipi_spec_dst = reinterpret_cast<const sockaddr_in*>(&server)->sin_addr;
+        packet->ipi_ifindex = interface;
+
+        message.msg_controllen = controlMsg->cmsg_len;
+#endif
+#ifdef IP_SENDSRCADDR
+        message.msg_control = controlBuf;
+        message.msg_controllen = CMSG_SPACE(sizeof(in_addr));
+
+        controlMsg = CMSG_FIRSTHDR(&message);
+        controlMsg->cmsg_level = IPPROTO_IP;
+        controlMsg->cmsg_type = IP_SENDSRCADDR;
+        controlMsg->cmsg_len = CMSG_LEN(sizeof(in_addr));
+
+        auto in = reinterpret_cast<in_addr*>(CMSG_DATA(controlMsg));
+        *in = reinterpret_cast<const sockaddr_in*>(&server)->sin_addr;
+
+        message.msg_controllen = controlMsg->cmsg_len;
+#endif
+    }
+
     if (sendmsg(socket->get(), &message, 0) == -1)
     {
         Log::warn << "Unable to send response to DNS request";

@@ -13,8 +13,10 @@ class MockForwarders : public IForwarders
     ~MockForwarders() noexcept
     { }
 
-    MOCK_METHOD3(handleRequest, void(std::shared_ptr<Socket> socket,
+    MOCK_METHOD5(handleRequest, void(std::shared_ptr<Socket> socket,
                                      const sockaddr_storage& client,
+                                     const sockaddr_storage& server,
+                                     int interface,
                                      std::vector<char> request));
 };
 

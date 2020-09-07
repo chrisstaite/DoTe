@@ -2,6 +2,10 @@
 #include "socket.h"
 #include "log.h"
 
+#ifdef __APPLE__
+#define __APPLE_USE_RFC_3542
+#endif
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -72,7 +76,8 @@ int addressLength(int family)
 }  // anon namespace
 
 Socket::Socket(int handle) :
-    m_handle(handle)
+    m_handle(handle),
+    m_domain(-1)
 {
     // Make the socket non-blocking
     if (m_handle >= 0)
@@ -91,7 +96,9 @@ Socket::Socket(int handle) :
 
 Socket::Socket(int domain, Type type) :
     Socket(socket(domain, toType(type), 0))
-{ }
+{
+    m_domain = domain;
+}
 
 Socket::~Socket()
 {
@@ -164,6 +171,42 @@ bool Socket::bind(const sockaddr* address, size_t addressLength)
 int Socket::get()
 {
     return m_handle;
+}
+
+bool Socket::enablePacketInfo()
+{
+    if (m_handle == -1)
+    {
+        Log::err << "Invalid handle when setting packet info";
+        return false;
+    }
+    int proto;
+    int flag;
+    int enable = 1;
+    if (m_domain == PF_INET)
+    {
+#ifdef __APPLE__
+        proto = IP_PKTINFO;
+#else
+        proto = SOL_IP;
+#endif
+        flag = IP_PKTINFO;
+    }
+    else if (m_domain == PF_INET6)
+    {
+        proto = IPPROTO_IPV6;
+#ifdef IPV6_RECVPKTINFO
+        flag = IPV6_RECVPKTINFO;
+#else
+        flag = IPV6_PKTINFO;
+#endif
+    }
+    else
+    {
+        Log::err << "Unknown domain for setting packet info";
+        return false;
+    }
+    return setsockopt(m_handle, proto, flag, &enable, sizeof(enable)) != -1;
 }
 
 }  // namespace dote

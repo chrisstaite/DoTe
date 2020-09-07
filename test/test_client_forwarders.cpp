@@ -34,6 +34,8 @@ TEST_F(TestClientForwarders, HandleRequest)
     std::shared_ptr<Socket> socketOne(new Socket(fd[0]));
     std::shared_ptr<Socket> socketTwo(new Socket(fd[1]));
     sockaddr_storage client = parse4("127.0.0.1", htons(60000));
+    sockaddr_storage server = { 0, AF_UNSPEC };
+    int interface = -1;
     ClientForwarders forwarders(m_loop, m_config, m_ssl, 1u);
     std::shared_ptr<openssl::MockSslConnection> connection(
         std::make_shared<openssl::MockSslConnection>()
@@ -48,7 +50,7 @@ TEST_F(TestClientForwarders, HandleRequest)
         .WillOnce(Return(configurations.begin()));
     EXPECT_CALL(*m_config, end())
         .WillOnce(Return(configurations.end()));
-    forwarders.handleRequest(socketOne, client, request);
+    forwarders.handleRequest(socketOne, client, server, interface, request);
 }
 
 }  // namespace dote

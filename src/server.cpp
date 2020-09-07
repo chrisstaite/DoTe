@@ -6,6 +6,10 @@
 #include "i_forwarders.h"
 #include "log.h"
 
+#ifdef __APPLE__
+#define __APPLE_USE_RFC_3542
+#endif
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -35,6 +39,10 @@ bool Server::addServer(const ConfigParser::Server& config)
     if (!serverSocket)
     {
         return false;
+    }
+    if (!serverSocket->enablePacketInfo())
+    {
+        Log::warn << "Unable to get recieve address for packets";
     }
     m_serverSockets.emplace_back(std::move(serverSocket));
     m_loop->registerRead(
@@ -66,12 +74,13 @@ void Server::handleDnsRequest(int handle)
     constexpr size_t SIZE_LENGTH = sizeof(unsigned short);
     constexpr size_t DNS_BUFFER = 512;
     std::vector<char> tcpBuffer(DNS_BUFFER + SIZE_LENGTH);
-    sockaddr_storage src_addr;
+    sockaddr_storage srcAddr;
     iovec iov[1] = {
         { tcpBuffer.data() + SIZE_LENGTH, tcpBuffer.size() - SIZE_LENGTH }
     };
+    char controlBuf[256];
     msghdr message = {
-        &src_addr, sizeof(src_addr), iov, 1, 0, 0
+        &srcAddr, sizeof(srcAddr), iov, 1, controlBuf, sizeof(controlBuf), 0
     };
 
     ssize_t count = recvmsg(handle, &message, 0);
@@ -91,9 +100,65 @@ void Server::handleDnsRequest(int handle)
     tcpBuffer.resize(count + SIZE_LENGTH);
     *reinterpret_cast<unsigned short*>(tcpBuffer.data()) = htons(count);
 
+    sockaddr_storage dstAddr = {
+        0, AF_UNSPEC
+    };
+    int ifIndex = -1;
+
+    // Process ancillary data  received in msgheader - cmsg(3)
+    for (auto controlMsg = CMSG_FIRSTHDR(&message);
+         controlMsg != nullptr;
+         controlMsg = CMSG_NXTHDR(&message, controlMsg))
+    {
+#ifdef IP_PKTINFO
+#ifdef __APPLE__
+        constexpr int level = IP_PKTINFO;
+#else
+        constexpr int level = SOL_IP;
+#endif
+        if (controlMsg->cmsg_level == level &&
+                controlMsg->cmsg_type == IP_PKTINFO)
+        {
+            auto i = reinterpret_cast<in_pktinfo*>(CMSG_DATA(controlMsg));
+            reinterpret_cast<sockaddr_in*>(&dstAddr)->sin_addr = i->ipi_addr;
+            dstAddr.ss_family = AF_INET;
+            dstAddr.ss_len = sizeof(sockaddr_in);
+            ifIndex = i->ipi_ifindex;
+        }
+#endif
+
+#ifdef IP_RECVDSTADDR
+        if (controlMsg->cmsg_level == IPPROTO_IP &&
+                controlMsg->cmsg_type == IP_RECVDSTADDR)
+        {
+            auto i = reinterpret_cast<in_addr*>(CMSG_DATA(controlMsg));
+            reinterpret_cast<sockaddr_in*>(&dstAddr)->sin_addr = *i;
+            dstAddr.ss_family = AF_INET;
+            dstAddr.ss_len = sizeof(sockaddr_in);
+        }
+#endif
+
+#if defined(IPV6_PKTINFO) || defined(IPV6_RECVPKTINFO)
+#ifdef IPV6_RECVPKTINFO
+        constexpr int type = IPV6_RECVPKTINFO;
+#else
+        constexpr int type = IPV6_PKTINFO;
+#endif
+        if (controlMsg->cmsg_level == IPPROTO_IPV6 &&
+                controlMsg->cmsg_type == type)
+        {
+            auto i = reinterpret_cast<in6_pktinfo*>(CMSG_DATA(controlMsg));
+            reinterpret_cast<sockaddr_in6*>(&dstAddr)->sin6_addr = i->ipi6_addr;
+            dstAddr.ss_family = AF_INET6;
+            dstAddr.ss_len = sizeof(sockaddr_in6);
+            ifIndex = i->ipi6_ifindex;
+        }
+#endif
+    }
+
     // Send the request
     m_forwarders->handleRequest(
-        std::move(handleSocket), src_addr, std::move(tcpBuffer)
+        std::move(handleSocket), srcAddr, dstAddr, ifIndex, std::move(tcpBuffer)
     );
 }
 

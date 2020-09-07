@@ -42,9 +42,13 @@ class ClientForwarders : public IForwarders
     ///
     /// \param socket   The socket to send the response on
     /// \param client   The client to respond to
+    /// \param server   The server to respond from (AF_UNSPEC if unknown)
+    /// \param interface  The interface to respond from or -1 if unknown
     /// \param request  The request to forward on
     void handleRequest(std::shared_ptr<Socket> socket,
                        const sockaddr_storage& client,
+                       const sockaddr_storage& server,
+                       int interface,
                        std::vector<char> request) override;
 
   private:
@@ -56,6 +60,10 @@ class ClientForwarders : public IForwarders
         std::shared_ptr<Socket> socket;
         /// The client to send the reply to
         sockaddr_storage client;
+        /// The server to respond from (AF_UNSPEC if unknown)
+        sockaddr_storage server;
+        /// The interface to respond from or -1 if unknown
+        int interface;
         /// The request to send
         std::vector<char> request;
     };
@@ -64,18 +72,26 @@ class ClientForwarders : public IForwarders
     ///
     /// \param socket   The socket to send the response on
     /// \param client   The client to respond to
+    /// \param server   The server to respond from (AF_UNSPEC if unknown)
+    /// \param interface  The interface to respond from or -1 if unknown
     /// \param request  The request to forward on
     void sendRequest(std::shared_ptr<Socket> socket,
                      const sockaddr_storage& client,
+                     const sockaddr_storage& server,
+                     int interface,
                      std::vector<char> request);
 
     /// \brief  Handle an incoming packet for a given client
     ///
     /// \param socket  The socket to send the response on
     /// \param client  The client that the response is for
+    /// \param server   The server to respond from (AF_UNSPEC if unknown)
+    /// \param interface  The interface to respond from or -1 if unknown
     /// \param buffer  The recieved buffer
     void handleIncoming(const std::shared_ptr<Socket>& socket,
                         const sockaddr_storage& client,
+                        const sockaddr_storage& server,
+                        int interface,
                         std::vector<char> buffer);
 
     /// \brief  Send a request from the front of the queue

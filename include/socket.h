@@ -81,9 +81,16 @@ class Socket
     /// \return  The raw handle or -1 if invalid
     int get();
 
+    /// \brief  Enable the packet info for this socket
+    ///
+    /// \return  True if the packet info was set on the socket
+    bool enablePacketInfo();
+
   private:
     /// The socket handle or -1 if it doesn't have one
     int m_handle;
+    /// The domain of the socket
+    int m_domain;
 };
 
 }  // namespace dote
