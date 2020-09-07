@@ -1,8 +1,11 @@
 
 #include "forwarder_config.h"
+#include "log.h"
 
 #include <algorithm>
 #include <cstring>
+
+#include <arpa/inet.h>
 
 namespace dote {
 
@@ -13,11 +16,26 @@ ForwarderConfig::ForwarderConfig() :
 
 void ForwarderConfig::clear()
 {
+    Log::info << "Removed all forwarders";
     m_forwarders.clear();
 }
 
 void ForwarderConfig::addForwarder(const ConfigParser::Forwarder& config)
 {
+    char ip[64];
+    switch(config.remote.ss_family) {
+        case AF_INET:
+            inet_ntop(AF_INET, &reinterpret_cast<const struct sockaddr_in&>(config.remote).sin_addr, ip, sizeof(ip));
+            break;
+
+        case AF_INET6:
+            inet_ntop(AF_INET6, &reinterpret_cast<const struct sockaddr_in6&>(config.remote).sin6_addr, ip, sizeof(ip));
+            break;
+        default:
+            ip[0] = '\0';
+            break;
+    }
+    Log::info << "Adding forwarder " << ip;
     m_forwarders.push_back(config);
 }
 

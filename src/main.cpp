@@ -6,7 +6,10 @@
 #include "log.h"
 #include "pid_file.h"
 #include "ip_lookup.h"
+#ifdef __linux__
 #include "vyatta.h"
+#include "vyatta_check.h"
+#endif
 
 #include <unistd.h>
 #include <signal.h>
@@ -164,25 +167,15 @@ void daemonise()
     stderr = fopen("/dev/null", "w+");
 }
 
-dote::ConfigParser loadVyatta(dote::ConfigParser parser)
+dote::ConfigParser loadDefaults(const dote::ConfigParser& commandLine)
 {
-    dote::Vyatta vyatta;
-    vyatta.loadConfig(parser);
-    parser.setDefaults();
-    return parser;
-}
-
-void reloadConfiguration(const dote::ConfigParser& parser)
-{
-    dote::ConfigParser config(parser);
+    dote::ConfigParser config(commandLine);
+#ifdef __linux__
     dote::Vyatta vyatta;
     vyatta.loadConfig(config);
+#endif
     config.setDefaults();
-    if (config.valid())
-    {
-        // Can't re-set listen because we dropped priviledges
-        g_dote->setForwarders(config);
-    }
+    return config;
 }
 
 }  // anon namespace
@@ -195,7 +188,7 @@ int main(int argc, char* const argv[])
     // Parse the configuration from the command line
     dote::ConfigParser clParser;
     clParser.parseConfig(argc, argv);
-    dote::ConfigParser parser(loadVyatta(clParser));
+    dote::ConfigParser parser = loadDefaults(clParser);
     if (!parser.valid())
     {
         usage(argv[0]);
@@ -219,9 +212,6 @@ int main(int argc, char* const argv[])
         return 0;
     }
 
-    // Create the DoTe instance
-    g_dote.reset(new dote::Dote(parser));
-
     // Daemonise if requested
     if (parser.daemonise())
     {
@@ -229,6 +219,9 @@ int main(int argc, char* const argv[])
         daemonise();
         dote::Log::setLogger(std::move(logger));
     }
+
+    // Create the DoTe instance
+    g_dote.reset(new dote::Dote(parser));
 
     // Write the pid file if requested
     dote::PidFile pidFile(parser.pidFile());
@@ -250,8 +243,12 @@ int main(int argc, char* const argv[])
     (void) signal(SIGINT, &shutdownHandler);
     (void) signal(SIGTERM, &shutdownHandler);
 
-    // TODO: Run reloadConfiguration if /config/config.boot changes
-    
+    // Reload configuration if /config/config.boot changes
+#ifdef __linux__
+    dote::VyattaCheck checker(clParser);
+    checker.configure(*g_dote);
+#endif
+
     // Start the event loop
     g_dote->run();
 

@@ -31,7 +31,9 @@ ConfigParser::ConfigParser() :
     m_pidFile(),
     m_daemonise(false),
     m_timeout(5u)
-{ }
+{
+    m_ipLookup.ss_family = AF_UNSPEC;
+}
 
 void ConfigParser::setDefaults()
 {
@@ -243,7 +245,6 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
         {nullptr, 0, nullptr, 0}
     };
 
-    m_ipLookup.ss_family = AF_UNSPEC;
     m_partialForwarder.remote.ss_family = AF_UNSPEC;
     optind = 0;
 

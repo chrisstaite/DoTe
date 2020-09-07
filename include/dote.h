@@ -54,6 +54,11 @@ class Dote
     /// \brief  Stop the server
     void shutdown();
 
+    /// \brief  Get the looper instance
+    ///
+    /// \return  The looper instance
+    std::shared_ptr<Loop> looper();
+
   private:
     /// The looper that is used for the server
     std::shared_ptr<Loop> m_loop;

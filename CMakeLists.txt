@@ -66,8 +66,6 @@ set(CommonSources
     src/ip_lookup.cpp
     include/dns_packet.h
     src/dns_packet.cpp
-    include/vyatta.h
-    src/vyatta.cpp
     include/dote.h
     src/dote.cpp)
 
@@ -104,6 +102,14 @@ set(TestSources
 
 # Remove RTTI because we don't need it and it bloats the binary
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    list(APPEND CommonSources
+        include/vyatta.h
+        src/vyatta.cpp
+        include/vyatta_check.h
+        src/vyatta_check.cpp)
+endif ()
 
 # Set up the library of the code that can be tested and compiled
 # into the real binary

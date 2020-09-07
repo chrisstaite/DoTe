@@ -18,6 +18,9 @@ class Vyatta
     /// \brief  Destroy configuration object and close library
     ~Vyatta();
 
+    Vyatta(const Vyatta&) = delete;
+    Vyatta& operator=(const Vyatta&) = delete;
+
     /// \brief  Load the configuration from VyOS into the config parser
     ///
     /// \param parser  The configuration parser to load the configuration into

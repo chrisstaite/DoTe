@@ -10,6 +10,7 @@
 #include "openssl/ssl_factory.h"
 
 #include <openssl/x509.h>
+#include <arpa/inet.h>
 
 namespace dote {
 
@@ -53,6 +54,23 @@ bool Dote::listen(const ConfigParser& config)
             Log::err << "Unable to bind to server port";
             result = false;
         }
+        else
+        {
+            char ip[64];
+            switch(serverConfig.address.ss_family) {
+                case AF_INET:
+                    inet_ntop(AF_INET, &reinterpret_cast<const struct sockaddr_in&>(serverConfig.address).sin_addr, ip, sizeof(ip));
+                    break;
+
+                case AF_INET6:
+                    inet_ntop(AF_INET6, &reinterpret_cast<const struct sockaddr_in6&>(serverConfig.address).sin6_addr, ip, sizeof(ip));
+                    break;
+                default:
+                    ip[0] = '\0';
+                    break;
+            }
+            Log::info << "Bound server " << ip;
+        }
     }
     if (!result)
     {
@@ -65,6 +83,7 @@ void Dote::run()
 {
     if (m_loop)
     {
+        Log::info << "DoTe started and running";
         m_loop->run();
     }
 }
@@ -72,6 +91,11 @@ void Dote::run()
 void Dote::shutdown()
 {
     m_server.reset();
+}
+
+std::shared_ptr<Loop> Dote::looper()
+{
+    return m_loop;
 }
 
 }  // namespace dote
