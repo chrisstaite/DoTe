@@ -47,6 +47,23 @@ doesn't support specifying the port otherwise.
 Read the run section below and edit the /config/scripts/post-config.d/10-dote
 file for advanced options such as not using the default resolver.
 
+
+EdgeOS Configuration
+--------------------
+
+Support for VyOS configuration file loading.
+
+Listening server can now be configured at custom-attribute/dote-serverN/value where N is a is a number starting from 0 increasing for multiple values.
+
+Forwarding server can be configured at custom-attribute/dote-forwarderN/value where N is a number starting from 0 increasing for multiple values.  The certificate pin may optionally be configured at custom-attribute/dote-forwarderN-pin and similarly the hostname pin can be configured at custom-attribute/dote-forwarderN-hostname.
+
+If the dote-server value is changed, a manual re-start of the process is required as privileges will not allow it to listen to any new ports.
+
+If the dote-forwarder is changed the new values will take effect immediately.
+
+Command line arguments are added to the arguments configured.
+
+
 Build
 -----
 
