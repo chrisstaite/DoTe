@@ -18,7 +18,7 @@ namespace dote {
 
 namespace {
 
-void getDestinationAddress(const msghdr& message, sockaddr_storage& dstAddr, int& ifIndex)
+void getDestinationAddress(msghdr& message, sockaddr_storage& dstAddr, int& ifIndex)
 {
     // Process ancillary data  received in msgheader - cmsg(3)
     for (auto controlMsg = CMSG_FIRSTHDR(&message);
@@ -37,7 +37,6 @@ void getDestinationAddress(const msghdr& message, sockaddr_storage& dstAddr, int
             auto i = reinterpret_cast<in_pktinfo*>(CMSG_DATA(controlMsg));
             reinterpret_cast<sockaddr_in*>(&dstAddr)->sin_addr = i->ipi_addr;
             dstAddr.ss_family = AF_INET;
-            dstAddr.ss_len = sizeof(sockaddr_in);
             ifIndex = i->ipi_ifindex;
         }
 #endif
@@ -49,7 +48,6 @@ void getDestinationAddress(const msghdr& message, sockaddr_storage& dstAddr, int
             auto i = reinterpret_cast<in_addr*>(CMSG_DATA(controlMsg));
             reinterpret_cast<sockaddr_in*>(&dstAddr)->sin_addr = *i;
             dstAddr.ss_family = AF_INET;
-            dstAddr.ss_len = sizeof(sockaddr_in);
         }
 #endif
 
@@ -65,7 +63,6 @@ void getDestinationAddress(const msghdr& message, sockaddr_storage& dstAddr, int
             auto i = reinterpret_cast<in6_pktinfo*>(CMSG_DATA(controlMsg));
             reinterpret_cast<sockaddr_in6*>(&dstAddr)->sin6_addr = i->ipi6_addr;
             dstAddr.ss_family = AF_INET6;
-            dstAddr.ss_len = sizeof(sockaddr_in6);
             ifIndex = i->ipi6_ifindex;
         }
 #endif
@@ -158,9 +155,8 @@ void Server::handleDnsRequest(int handle)
     tcpBuffer.resize(count + SIZE_LENGTH);
     *reinterpret_cast<unsigned short*>(tcpBuffer.data()) = htons(count);
 
-    sockaddr_storage dstAddr = {
-        0, AF_UNSPEC
-    };
+    sockaddr_storage dstAddr;
+    dstAddr.ss_family = AF_UNSPEC;
     int ifIndex = -1;
     getDestinationAddress(message, dstAddr, ifIndex);
 

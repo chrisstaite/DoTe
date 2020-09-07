@@ -13,6 +13,7 @@
 
 #include <arpa/inet.h>
 #include <functional>
+#include <cstring>
 
 namespace dote {
 
