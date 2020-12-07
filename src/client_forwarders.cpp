@@ -225,13 +225,19 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
     {
         clientLength = sizeof(sockaddr_in6);
     }
-    char controlBuf[256];
+
     struct msghdr message {
         const_cast<sockaddr_storage*>(&client),
-        clientLength, iov, 1, controlBuf, 0, 0
+        clientLength, iov, 1, nullptr, 0, 0
     };
 
-    addSourceAddress(message, server, interface);
+    // Only set the source address if interface is given
+    char controlBuf[256];
+    if (interface != -1)
+    {
+        message.msg_control = controlBuf;
+        addSourceAddress(message, server, interface);
+    }
 
     if (sendmsg(socket->get(), &message, 0) == -1)
     {
@@ -240,3 +246,4 @@ void ClientForwarders::handleIncoming(const std::shared_ptr<Socket>& socket,
 }
 
 }  // namespace dote
+

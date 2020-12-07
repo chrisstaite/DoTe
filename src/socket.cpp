@@ -186,7 +186,7 @@ bool Socket::enablePacketInfo()
     if (m_domain == PF_INET)
     {
 #ifdef __APPLE__
-        proto = IP_PKTINFO;
+        proto = IPPROTO_IP;
 #else
         proto = SOL_IP;
 #endif

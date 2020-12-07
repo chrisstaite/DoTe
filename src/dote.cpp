@@ -49,26 +49,26 @@ bool Dote::listen(const ConfigParser& config)
     m_server = std::make_shared<Server>(m_loop, m_forwarders);
     for (const auto& serverConfig : config.servers())
     {
+        char ip[64];
+        switch(serverConfig.address.ss_family) {
+            case AF_INET:
+                inet_ntop(AF_INET, &reinterpret_cast<const struct sockaddr_in&>(serverConfig.address).sin_addr, ip, sizeof(ip));
+                break;
+
+            case AF_INET6:
+                inet_ntop(AF_INET6, &reinterpret_cast<const struct sockaddr_in6&>(serverConfig.address).sin6_addr, ip, sizeof(ip));
+                break;
+            default:
+                ip[0] = '\0';
+                break;
+        }
         if (!m_server->addServer(serverConfig))
         {
-            Log::err << "Unable to bind to server port";
+            Log::err << "Unable to bind to server port " << ip;
             result = false;
         }
         else
         {
-            char ip[64];
-            switch(serverConfig.address.ss_family) {
-                case AF_INET:
-                    inet_ntop(AF_INET, &reinterpret_cast<const struct sockaddr_in&>(serverConfig.address).sin_addr, ip, sizeof(ip));
-                    break;
-
-                case AF_INET6:
-                    inet_ntop(AF_INET6, &reinterpret_cast<const struct sockaddr_in6&>(serverConfig.address).sin6_addr, ip, sizeof(ip));
-                    break;
-                default:
-                    ip[0] = '\0';
-                    break;
-            }
             Log::info << "Bound server " << ip;
         }
     }

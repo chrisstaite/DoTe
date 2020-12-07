@@ -30,10 +30,7 @@ class ConfigParser
         sockaddr_storage address;
     };
 
-    /// \brief  Parse the configuration
-    ///
-    /// \param argc  The number of arguments in argv
-    /// \param argv  The parameters passed in
+    /// \brief  Setup for configuration parsing
     ConfigParser();
     
     /// \brief  Parse the configuration
