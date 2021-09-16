@@ -34,6 +34,12 @@ chmod +x /config/dote_mips /config/scripts/post-config.d/10-dote
 sudo /config/scripts/post-config.d/10-dote
 configure
 set service dns forwarding options server=::1#5353
+set service dns forwarding options no-resolv
+# The following four entries are optional if you want to use DNSSEC
+set service dns forwarding options trust-anchor=.,19036,8,2,49AAC11D7B6F6446702E54A1607371607A1A41855200FD2CE1CDDE32F24E8FB5
+set service dns forwarding options trust-anchor=.,20326,8,2,E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D
+set service dns forwarding options dnssec
+set service dns forwarding options dnssec-check-unsigned
 delete service dns forwarding name-server
 commit
 ~~~~~
