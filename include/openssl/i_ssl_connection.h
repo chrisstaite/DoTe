@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <string>
+#include <functional>
+
+typedef struct x509_store_ctx_st X509_STORE_CTX;
 
 namespace dote {
 namespace openssl {
@@ -10,6 +13,9 @@ namespace openssl {
 class ISslConnection
 {
   public:
+    /// The type of verifier to forward on to, returns 2 if pin and hostname pass, 1 if hostname only, 0 if not valid
+    using Verifier = std::function<int(X509_STORE_CTX*)>;
+
     /// \brief  The result types from communications
     enum Result
     {
@@ -35,11 +41,15 @@ class ISslConnection
     /// \param handle  The underlying socket to set on this connection
     virtual void setSocket(int handle) = 0;
 
-    /// \brief  Get the SHA-256 hash of the peer certificate after
-    ///         connect has completed
+    /// \brief  Disable certificate verification, should be used
+    ///         for testing only, it kind of defeats the point
+    virtual void disableVerification() = 0;
+
+    /// \brief  Set the verifier for the connections, by default
+    ///         connections are verified by PKI, this allows SPKI
     ///
-    /// \return  The SHA-256 hash of the certificate
-    virtual std::vector<unsigned char> getPeerCertificateHash() = 0;
+    /// \param verifier  The verifier to set
+    virtual void setVerifier(Verifier verifier) = 0;
 
     /// \brief  Get the SHA-256 hash of the public key of the attached
     ///         peer certificate after connect has completed
@@ -51,14 +61,6 @@ class ISslConnection
     ///
     /// \return  The peer certificate common name
     virtual std::string getCommonName() = 0;
-
-    /// \brief  Check the connected peer certificate is valid for the
-    ///         given hostname after connect has completed
-    ///
-    /// \param hostname  The hostname to verify
-    ///
-    /// \return  True if the hostname is valid for the connected peer
-    virtual bool verifyHostname(const std::string& hostname) = 0;
 
     /// \brief  Connect the underlying connection
     ///

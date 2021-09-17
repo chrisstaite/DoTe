@@ -12,6 +12,8 @@ typedef struct ssl_session_st SSL_SESSION;
 namespace dote {
 namespace openssl {
 
+class SslConnection;
+
 /// \brief  A wrapper around an OpenSSL context which automatically
 ///         cleans it up on destruction.  Will also initialise the
 ///         library on construction if context creation fails.
@@ -34,10 +36,17 @@ class Context
     /// \brief  Clean up the context
     ~Context();
 
-    /// \brief  Set the verifier for the connections
+    /// \brief  Set the chain verifier for all incoming connections
     ///
-    /// \prarm handle  The verifier to set
-    void setVerifier(Verifier verifier);
+    /// \prarm verifier  The verifier to set
+    void setChainVerifier(Verifier verifier);
+
+    /// \brief  Set the SSLConnection instance for the SSL object, this
+    ///         causes the verify function to be fired
+    ///
+    /// \param ssl  The SSL object to get the connection for
+    /// \param connection  The connection to set on the SSL object
+    void setSslConnection(SSL* ssl, SslConnection* connection);
 
   protected:
     /// \brief  Get the raw context
@@ -66,19 +75,29 @@ class Context
     /// \brief  A C-style trampoline to get back the C++ instance to
     ///         perform the certificate verification
     ///
-    /// \param store    The context to verify
-    /// \param context  The Context instance to forward to
+    /// \param preverify  Set to 0 if the chain failed verification built-in, 1 otherwise
+    /// \param store      The context to verify
     ///
     /// \return  The result of the context->m_verifier function or
     ///          0 if any of the checks fail
-    static int verifyTrampoline(X509_STORE_CTX* store, void* context);
+    static int verifyTrampoline(int preverify, X509_STORE_CTX* store);
+
+    /// \brief  A C-style trampoline to get back the C++ instance to
+    ///         perform the certificate verification
+    ///
+    /// \param store      The context to verify
+    /// \param context  The Context instance to forward to
+    ///
+    /// \return  The result of the context->m_chainVerifier function or
+    ///          0 if any of the checks fail
+    static int chainVerifyTrampoline(X509_STORE_CTX* store, void* context);
 
     /// The wrapped context
     SSL_CTX* m_context;
     /// The client session that we could re-use
     SSL_SESSION* m_session;
-    /// The verifier to use for the connection if not the default
-    Verifier m_verifier;
+    /// The chain verifier to use for the connection if not the default
+    Verifier m_chainVerifier;
 };
 
 }  // namespace openssl

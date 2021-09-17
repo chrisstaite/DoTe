@@ -3,6 +3,7 @@
 #include "i_loop.h"
 #include "i_forwarder_config.h"
 #include "openssl/i_ssl_factory.h"
+#include "openssl/spki_verifier.h"
 #include "socket.h"
 #include "log.h"
 
@@ -25,9 +26,12 @@ ForwarderConnection::ForwarderConnection(std::shared_ptr<ILoop> loop,
     m_forwarder()
 {
     auto chosen = m_config->get();
-    if (chosen != m_config->end())
+    if (m_connection && chosen != m_config->end())
     {
         m_forwarder = *chosen;
+
+        configureVerifier();
+
         m_socket = Socket::connect(m_forwarder.remote, Socket::Type::TCP);
 
         if (m_socket)
@@ -55,6 +59,21 @@ ForwarderConnection::~ForwarderConnection()
     close();
 }
 
+void ForwarderConnection::configureVerifier()
+{
+    if (m_forwarder.disablePki)
+    {
+        m_connection->disableVerification();
+    }
+    else if (!m_forwarder.host.empty() || !m_forwarder.pin.empty())
+    {
+        openssl::SpkiVerifier verifier(m_forwarder);
+        m_connection->setVerifier([verifier](X509_STORE_CTX* store) {
+            return verifier.verify(store);
+        });
+    }
+}
+
 void ForwarderConnection::setIncomingCallback(IncomingCallback incoming)
 {
     m_incoming = std::move(incoming);
@@ -68,14 +87,6 @@ void ForwarderConnection::setShutdownCallback(ShutdownCallback shutdown)
 bool ForwarderConnection::closed()
 {
     return (m_state == SHUTTING_DOWN || m_state == CLOSED);
-}
-
-bool ForwarderConnection::verifyConnection()
-{
-    return m_connection->verifyHostname(m_forwarder.host) &&
-        (m_forwarder.pin.empty() ||
-            m_connection->getPeerCertificatePublicKeyHash() ==
-                m_forwarder.pin);
 }
 
 void ForwarderConnection::connect(int handle)
@@ -100,29 +111,20 @@ void ForwarderConnection::connect(int handle)
             );
             break;
         case openssl::SslConnection::Result::SUCCESS:
-            if (verifyConnection())
+            m_loop->registerRead(
+                m_socket->get(),
+                std::bind(&ForwarderConnection::incoming, this, _1),
+                m_timeout
+            );
+            if (!m_buffer.empty())
             {
-                m_loop->registerRead(
+                m_loop->registerWrite(
                     m_socket->get(),
-                    std::bind(&ForwarderConnection::incoming, this, _1),
+                    std::bind(&ForwarderConnection::outgoing, this, _1),
                     m_timeout
                 );
-                if (!m_buffer.empty())
-                {
-                    m_loop->registerWrite(
-                        m_socket->get(),
-                        std::bind(&ForwarderConnection::outgoing, this, _1),
-                        m_timeout
-                    );
-                }
-                m_state = State::OPEN;
             }
-            else
-            {
-                Log::notice << "Bad hostname or certificate for forwarder";
-                m_config->setBad(m_forwarder);
-                shutdown();
-            }
+            m_state = State::OPEN;
             break;
         case openssl::SslConnection::Result::FATAL:
             Log::notice << "Error handshaking with forwarder";

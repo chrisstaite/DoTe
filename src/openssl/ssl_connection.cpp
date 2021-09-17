@@ -1,7 +1,7 @@
 
 #include "openssl/ssl_connection.h"
 #include "openssl/context.h"
-#include "openssl/hostname_verifier.h"
+#include "openssl/certificate_utilities.h"
 
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
@@ -12,39 +12,47 @@
 namespace dote {
 namespace openssl {
 
+using namespace std::placeholders;
+
 namespace {
 
-std::string toString(ASN1_STRING* string)
+/// \brief  Perform a certificate utility function on the peer certificate
+///
+/// \param utility  The utility to run
+/// \param ssl  The connection to get the peer certificate from
+///
+/// \return  The result of the utility on the peer certificate or default initialised on error
+template<typename T>
+T certificateOperation(T(CertificateUtilities::*utility)(), SSL* ssl)
 {
-    if (string)
+    T result;
+    if (ssl)
     {
-        return std::string(
-            reinterpret_cast<const char*>(
-#if OPENSSL_VERSION_NUMBER >= 0x010100000
-                ASN1_STRING_get0_data(string)
-#else
-                ASN1_STRING_data(string)
-#endif
-            ),
-            ASN1_STRING_length(string)
+        std::unique_ptr<X509, decltype(&X509_free)> certificate(
+            SSL_get_peer_certificate(ssl), &X509_free
         );
+        if (certificate)
+        {
+            CertificateUtilities utilities(certificate.get());
+            result = (utilities.*utility)();
+        }
     }
-    return {};
+    return result;
 }
 
 }  // anon namespace
 
-using namespace std::placeholders;
-
 SslConnection::SslConnection(std::shared_ptr<Context> context) :
     m_context(std::move(context)),
-    m_ssl(nullptr)
+    m_ssl(nullptr),
+    m_verifier()
 {
     if (m_context)
     {
         m_ssl = SSL_new(m_context->get());
+        m_context->setSslConnection(m_ssl, this);
         SSL_SESSION* session = m_context->getSession();
-        if (session)
+        if (m_ssl && session)
         {
             SSL_set_session(m_ssl, session);
         }
@@ -67,87 +75,24 @@ void SslConnection::setSocket(int handle)
     }
 }
 
-std::vector<unsigned char> SslConnection::getPeerCertificateHash(HashFunction function)
-{
-    std::vector<unsigned char> hash;
-    if (m_ssl)
-    {
-        std::unique_ptr<X509, decltype(&X509_free)> certificate(
-            SSL_get_peer_certificate(m_ssl), &X509_free
-        );
-        const EVP_MD* sha256 = EVP_sha256();
-        if (certificate && sha256)
-        {
-            hash.resize(EVP_MAX_MD_SIZE);
-            unsigned int length = hash.size();
-            if (function(certificate.get(), sha256, hash.data(), &length) == 1)
-            {
-                hash.resize(length);
-            }
-            else
-            {
-                hash.clear();
-            }
-        }
-    }
-    return hash;
-}
 
-std::vector<unsigned char> SslConnection::getPeerCertificateHash()
-{
-    return getPeerCertificateHash(&X509_digest);
-}
 
 std::vector<unsigned char> SslConnection::getPeerCertificatePublicKeyHash()
 {
-    return getPeerCertificateHash(&X509_pubkey_digest);
+    return certificateOperation(&CertificateUtilities::getPublicKeyHash, m_ssl);
 }
 
 std::string SslConnection::getCommonName()
 {
-    std::string result;
-    if (m_ssl)
-    {
-        std::unique_ptr<X509, decltype(&X509_free)> certificate(
-            SSL_get_peer_certificate(m_ssl), &X509_free
-        );
-        if (certificate)
-        {
-            int index = X509_NAME_get_index_by_NID(
-                X509_get_subject_name(certificate.get()),
-                NID_commonName,
-                -1
-            );
-            if (index >= 0)
-            {
-                X509_NAME_ENTRY* commonName = X509_NAME_get_entry(
-                    X509_get_subject_name(certificate.get()), index
-                );
-                if (commonName)
-                {
-                    result = toString(X509_NAME_ENTRY_get_data(commonName));
-                }
-            }
-        }
-    }
-    return result;
+    return certificateOperation(&CertificateUtilities::getCommonName, m_ssl);
 }
 
-bool SslConnection::verifyHostname(const std::string& hostname)
+void SslConnection::disableVerification()
 {
-    bool result = false;
     if (m_ssl)
     {
-        std::unique_ptr<X509, decltype(&X509_free)> certificate(
-            SSL_get_peer_certificate(m_ssl), &X509_free
-        );
-        if (certificate)
-        {
-            HostnameVerifier verifier(certificate.get());
-            result = verifier.isValid(hostname);
-        }
+        SSL_set_verify(m_ssl, SSL_VERIFY_NONE, nullptr);
     }
-    return result;
 }
 
 SslConnection::Result SslConnection::doFunction(std::function<int(SSL*)> function)
@@ -236,6 +181,22 @@ SslConnection::Result SslConnection::read(std::vector<char>& buffer)
     {
         buffer.resize(readLength);
         std::copy(stackBuffer, &stackBuffer[readLength], buffer.begin());
+    }
+    return result;
+}
+
+void SslConnection::setVerifier(Context::Verifier verifier)
+{
+    m_verifier = std::move(verifier);
+}
+
+int SslConnection::verify(X509_STORE_CTX *store)
+{
+    // If there's no verifier set, then use the internal verification
+    int result = 1;
+    if (m_verifier)
+    {
+        result = m_verifier(store);
     }
     return result;
 }

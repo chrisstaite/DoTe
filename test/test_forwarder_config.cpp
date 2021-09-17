@@ -16,7 +16,7 @@ TEST(TestForwarderConfig, NotEmpty)
 {
     ForwarderConfig config;
     ConfigParser::Forwarder forwarder{
-        parse4("127.0.0.1", 53), "host", {}
+        parse4("127.0.0.1", 53), false, "host", {}
     };
     config.addForwarder(forwarder);
     EXPECT_NE(config.get(), config.end());
@@ -26,11 +26,11 @@ TEST(TestForwarderConfig, GetFirst)
 {
     ForwarderConfig config;
     ConfigParser::Forwarder forwarder{
-        parse4("127.0.0.1", 53), "host", {0x1}
+        parse4("127.0.0.1", 53), false, "host", {0x1}
     };
     config.addForwarder(forwarder);
     ConfigParser::Forwarder forwarder2{
-        parse4("127.0.0.2", 54), "host2", {0x2}
+        parse4("127.0.0.2", 54), false, "host2", {0x2}
     };
     config.addForwarder(forwarder2);
     auto first = config.get();
@@ -43,11 +43,11 @@ TEST(TestForwarderConfig, SetFirstBad)
 {
     ForwarderConfig config;
     ConfigParser::Forwarder forwarder{
-        parse4("127.0.0.1", 53), "host", {0x1}
+        parse4("127.0.0.1", 53), false, "host", {0x1}
     };
     config.addForwarder(forwarder);
     ConfigParser::Forwarder forwarder2{
-        parse4("127.0.0.2", 54), "host2", {0x2}
+        parse4("127.0.0.2", 54), false, "host2", {0x2}
     };
     config.addForwarder(forwarder2);
     config.setBad(forwarder);
@@ -61,11 +61,11 @@ TEST(TestForwarderConfig, SetLastBad)
 {
     ForwarderConfig config;
     ConfigParser::Forwarder forwarder{
-        parse4("127.0.0.1", 53), "host", {0x1}
+        parse4("127.0.0.1", 53), false, "host", {0x1}
     };
     config.addForwarder(forwarder);
     ConfigParser::Forwarder forwarder2{
-        parse4("127.0.0.2", 54), "host2", {0x2}
+        parse4("127.0.0.2", 54), false, "host2", {0x2}
     };
     config.addForwarder(forwarder2);
     config.setBad(forwarder2);

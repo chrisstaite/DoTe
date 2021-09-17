@@ -17,6 +17,8 @@ class ConfigParser
     {
         /// The IP and port to connect to and forward to
         sockaddr_storage remote;
+        /// Set to true to disable certificate verification
+        bool disablePki;
         /// The host to verify the certificate common name against
         std::string host;
         /// The base64 encoded SHA-256 hash of the certificate
@@ -118,6 +120,9 @@ class ConfigParser
     ///
     /// \param pin  The Base64 encoded public key pin
     void addPin(const char* pin);
+
+    /// \brief  Disable certificate verification for the current forwarder
+    void disableVerification();
 
     /// \brief  The hostname to add to the current m_partialForwarder
     ///

@@ -31,7 +31,7 @@ Dote::Dote(const ConfigParser& config) :
 {
     setForwarders(config);
     m_config->setTimeout(config.timeout());
-    m_context->setVerifier(std::bind(&VerifyCache::verify, &m_cache, _1));
+    m_context->setChainVerifier(std::bind(&VerifyCache::verify, &m_cache, _1));
 }
 
 void Dote::setForwarders(const ConfigParser& config)

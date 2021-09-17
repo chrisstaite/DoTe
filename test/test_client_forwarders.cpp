@@ -44,7 +44,7 @@ TEST_F(TestClientForwarders, HandleRequest)
         .WillOnce(Return(connection));
     std::vector<ConfigParser::Forwarder> configurations;
     configurations.emplace_back(ConfigParser::Forwarder {
-        parse4("127.0.0.1", 4000), "", {}
+        parse4("127.0.0.1", 4000), false, "", {}
     });
     EXPECT_CALL(*m_config, get())
         .WillOnce(Return(configurations.begin()));

@@ -12,6 +12,7 @@ namespace dote {
 namespace openssl {
 
 class Context;
+class CertificateUtilities;
 
 /// \brief  A wrapper around an OpenSSL SSL connection
 class SslConnection : public ISslConnection
@@ -28,16 +29,14 @@ class SslConnection : public ISslConnection
     /// \brief  Clean up the wrapped connection
     ~SslConnection() noexcept;
 
+    /// \brief  Disable certificate verification, should be used
+    ///         for testing only, it kind of defeats the point
+    void disableVerification() override;
+
     /// \brief  Set the underlying socket for this connection
     ///
     /// \param handle  The underlying socket to set on this connection
     void setSocket(int handle) override;
-
-    /// \brief  Get the SHA-256 hash of the peer certificate after
-    ///         connect has completed
-    ///
-    /// \return  The SHA-256 hash of the certificate
-    std::vector<unsigned char> getPeerCertificateHash() override;
 
     /// \brief  Get the SHA-256 hash of the public key of the attached
     ///         peer certificate after connect has completed
@@ -49,14 +48,6 @@ class SslConnection : public ISslConnection
     ///
     /// \return  The peer certificate common name
     std::string getCommonName() override;
-
-    /// \brief  Check the connected peer certificate is valid for the
-    ///         given hostname after connect has completed
-    ///
-    /// \param hostname  The hostname to verify
-    ///
-    /// \return  True if the hostname is valid for the connected peer
-    bool verifyHostname(const std::string& hostname) override;
 
     /// \brief  Connect the underlying connection
     ///
@@ -82,21 +73,22 @@ class SslConnection : public ISslConnection
     /// \return  The status of the function
     Result read(std::vector<char>& buffer) override;
 
+    /// \brief  Set the verifier for the connections, by default
+    ///         connections are verified by PKI, this allows SPKI
+    ///
+    /// \param verifier  The verifier to set
+    void setVerifier(Verifier verifier) override;
+
+    /// \brief  Verify a connection based on the given certificate store
+    ///
+    /// \param store  The certificate store to verify
+    ///
+    /// \return  2 if pin and hostname pass, 1 if hostname only, 0 if not valid
+    int verify(X509_STORE_CTX* store);
+
   private:
     /// The maximum size of the read
     static constexpr std::size_t MAX_FRAME = 16 * 1024;
-
-    /// The hash function for getPeerCertificateHash
-    using HashFunction = int(*)(
-        const X509*, const EVP_MD*, unsigned char*, unsigned int*
-    );
-
-    /// \brief  Get the SHA-256 hash of the peer certificate
-    ///
-    /// \param function  The hash function to use for the certificate
-    ///
-    /// \return  The SHA-256 hash
-    std::vector<unsigned char> getPeerCertificateHash(HashFunction function);
 
     /// \brief  Perform a function on the underlying SSL handling the
     ///         non-blocking errors
@@ -110,6 +102,8 @@ class SslConnection : public ISslConnection
     std::shared_ptr<Context> m_context;
     /// The wrapped SSL connection
     SSL* m_ssl;
+    /// The verifier to use for the connection if not the default
+    Verifier m_verifier;
 };
 
 }  // namespace openssl

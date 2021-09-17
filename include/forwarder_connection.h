@@ -88,11 +88,9 @@ class ForwarderConnection
         CLOSED
     };
 
-    /// \brief  Verify the certificate of the connection matches
-    ///         the configuration pinning
-    ///
-    /// \return  True if the hostname and certificate are valid
-    bool verifyConnection();
+    /// \brief  Configure the verification routines for the connection to
+    ///         the given forwarder
+    void configureVerifier();
 
     /// \brief  Perform the initial connection
     ///

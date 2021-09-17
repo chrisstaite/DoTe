@@ -273,7 +273,7 @@ TEST_F(TestConfigParser, OneForwarderDefaultPort)
 {
     const char* const args[] = { "", "-f", "1.1.1.1" };
     std::vector<ConfigParser::Forwarder> expected{
-        { parse4("1.1.1.1", 853), "", {} }
+        { parse4("1.1.1.1", 853), false, "", {} }
     };
     ConfigParser parser;
     parser.parseConfig(
@@ -287,7 +287,7 @@ TEST_F(TestConfigParser, OneForwarderWithPort)
 {
     const char* const args[] = { "", "-f", "1.1.1.1:8853" };
     std::vector<ConfigParser::Forwarder> expected{
-        { parse4("1.1.1.1", 8853), "", {} }
+        { parse4("1.1.1.1", 8853), false, "", {} }
     };
     ConfigParser parser;
     parser.parseConfig(
@@ -301,7 +301,7 @@ TEST_F(TestConfigParser, OneForwarderWithHostname)
 {
     const char* const args[] = { "", "-f", "1.1.1.1", "-h", "domain.com" };
     std::vector<ConfigParser::Forwarder> expected{
-        {parse4("1.1.1.1", 853), "domain.com", {} }
+        {parse4("1.1.1.1", 853), false, "domain.com", {} }
     };
     ConfigParser parser;
     parser.parseConfig(
@@ -315,7 +315,7 @@ TEST_F(TestConfigParser, OneForwarderWithHostnameLong)
 {
     const char* const args[] = { "", "--forwarder", "1.1.1.1", "--hostname", "domain.com" };
     std::vector<ConfigParser::Forwarder> expected{
-        {parse4("1.1.1.1", 853), "domain.com", {} }
+        {parse4("1.1.1.1", 853), false, "domain.com", {} }
     };
     ConfigParser parser;
     parser.parseConfig(
@@ -329,7 +329,7 @@ TEST_F(TestConfigParser, OneForwarderWithPin)
 {
     const char* const args[] = { "", "-f", "1.1.1.1", "-p", "AQ==" };
     std::vector<ConfigParser::Forwarder> expected{
-        { parse4("1.1.1.1", 853), "", { 0x01 } }
+        { parse4("1.1.1.1", 853), false, "", { 0x01 } }
     };
     ConfigParser parser;
     parser.parseConfig(
@@ -343,7 +343,7 @@ TEST_F(TestConfigParser, OneForwarderWithPinLong)
 {
     const char* const args[] = { "", "--forwarder", "1.1.1.1", "--pin", "AQ==" };
     std::vector<ConfigParser::Forwarder> expected{
-        { parse4("1.1.1.1", 853), "", { 0x01 } }
+        { parse4("1.1.1.1", 853), false, "", { 0x01 } }
     };
     ConfigParser parser;
     parser.parseConfig(

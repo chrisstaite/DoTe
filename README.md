@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/chrisstaite/DoTe.svg?branch=master)](https://travis-ci.org/chrisstaite/DoTe)
+[![Build Status](https://app.travis-ci.com/chrisstaite/DoTe.svg?branch=master)](https://app.travis-ci.com/chrisstaite/DoTe)
 
 DoTe
 ====
@@ -97,7 +97,7 @@ Run
 
 By default DoTe will listen on localhost port 53 and
 forward queries to 1.1.1.1 port 853 with hostname
-verification and certificate pinned.
+verification and PKI enabled.
 
 ~~~~
 ./dote

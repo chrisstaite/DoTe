@@ -29,6 +29,10 @@ set(CommonSources
     src/openssl/ssl_connection.cpp
     include/openssl/hostname_verifier.h
     src/openssl/hostname_verifier.cpp
+    include/openssl/spki_verifier.h
+    src/openssl/spki_verifier.cpp
+    include/openssl/certificate_utilities.h
+    src/openssl/certificate_utilities.cpp
     include/openssl/base64.h
     src/openssl/base64.cpp
     include/socket.h

@@ -92,6 +92,8 @@ void usage(const char* appName)
     std::cerr << "                             forwarders' certificate.\n";
     std::cerr << "   -p --pin  hash            The Base64 encoding of a SHA-256 hash of the\n";
     std::cerr << "                             previously specified forwarders' public key.\n";
+    std::cerr << "   -i --insecure             Disable any certificate verification for the\n";
+    std::cerr << "                             forwarder\n";
     std::cerr << "   -c --ciphers  ciphers     The OpenSSL ciphers to use for connecting\n";
     std::cerr << "   -m --connections  max     The maximum number of outgoing requests at a\n";
     std::cerr << "                             time before buffering the requests.\n";

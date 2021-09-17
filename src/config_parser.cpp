@@ -167,6 +167,11 @@ void ConfigParser::addForwarder(const char* server)
     }
 }
 
+void ConfigParser::disableVerification()
+{
+    m_partialForwarder.disablePki = true;
+}
+
 void ConfigParser::addHostname(const char* hostname)
 {
     if (m_partialForwarder.host.empty())
@@ -236,6 +241,7 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
         {"forwarder", required_argument, nullptr, 'f'},
         {"hostname", required_argument, nullptr, 'h'},
         {"pin", required_argument, nullptr, 'p'},
+        {"insecure", no_argument, nullptr, 'i'},
         {"ciphers", required_argument, nullptr, 'c'},
         {"connections", required_argument, nullptr, 'm'},
         {"daemonise", no_argument, nullptr, 'd'},
@@ -249,7 +255,7 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
     optind = 0;
 
     while (m_valid &&
-           (c = getopt_long(argc, argv, "s:f:h:p:c:m:dP:l:t:", long_options, nullptr)) != -1)
+           (c = getopt_long(argc, argv, "s:f:h:p:ic:m:dP:l:t:", long_options, nullptr)) != -1)
     {
         switch (c)
         {
@@ -265,6 +271,10 @@ void ConfigParser::parseConfig(int argc, char* const argv[])
             case 'h':
                 // The hostname pin for the current forwarder
                 addHostname(optarg);
+                break;
+            case 'i':
+                // Disable certificate verification
+                disableVerification();
                 break;
             case 'p':
                 // The certificate pin for the current forwarder
@@ -350,25 +360,22 @@ const std::string& ConfigParser::pidFile() const
 void ConfigParser::defaultForwarders()
 {
     std::string hostname("cloudflare-dns.com");
-    auto pin = openssl::Base64::decode(
-        "x/4nXhFBWs/WUV9fd+IP0URCuQv+HflulKdQu0FS7aE="
-    );
-    Forwarder a{{}, hostname, pin};
+    Forwarder a{{}, false, hostname, {}};
     if (parseServer("[2606:4700:4700::1111]", 853, a.remote))
     {
         m_forwarders.emplace_back(std::move(a));
     }
-    Forwarder b{{}, hostname, pin};
+    Forwarder b{{}, false, hostname, {}};
     if (parseServer("[2606:4700:4700::1001]", 853, b.remote))
     {
         m_forwarders.emplace_back(std::move(b));
     }
-    Forwarder c{{}, hostname, pin};
+    Forwarder c{{}, false, hostname, {}};
     if (parseServer("1.1.1.1", 853, c.remote))
     {
         m_forwarders.emplace_back(std::move(c));
     }
-    Forwarder d{{}, hostname, pin};
+    Forwarder d{{}, false, hostname, {}};
     if (parseServer("1.0.0.1", 853, d.remote))
     {
         m_forwarders.emplace_back(std::move(d));
