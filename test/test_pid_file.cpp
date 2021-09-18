@@ -4,32 +4,52 @@
 #include <gtest/gtest.h>
 
 #include <unistd.h>
+#include <cstdio>
+#include <cstdlib>
 
 namespace dote {
 
-TEST(TestPidFile, NoFile)
+class TestPidFile : public ::testing::Test
+{
+  public:
+    TestPidFile() :
+        m_pidFile(::testing::internal::TempDir() + "pidfile-XXXXXX.pid")
+    {
+        close(mkstemp(&m_pidFile[0]));
+    }
+
+    ~TestPidFile()
+    {
+        unlink(m_pidFile.c_str());
+    }
+    
+  protected:
+    std::string m_pidFile;
+};
+
+TEST_F(TestPidFile, NoFile)
 {
     PidFile file("");
     EXPECT_TRUE(file.valid());
 }
 
-TEST(TestPidFile, CreateFile)
+TEST_F(TestPidFile, CreateFile)
 {
-    PidFile file("test.pid");
+    PidFile file(m_pidFile);
     EXPECT_TRUE(file.valid());
-    EXPECT_EQ(0, access("test.pid", F_OK));
+    EXPECT_EQ(0, access(m_pidFile.c_str(), F_OK));
 }
 
-TEST(TestPidFile, FileDeleted)
+TEST_F(TestPidFile, FileDeleted)
 {
     {
-        PidFile file("test.pid");
+        PidFile file(m_pidFile);
         EXPECT_TRUE(file.valid());
     }
-    EXPECT_NE(0, access("test.pid", F_OK));
+    EXPECT_NE(0, access(m_pidFile.c_str(), F_OK));
 }
 
-TEST(TestPidFile, DoubleLockFail)
+TEST_F(TestPidFile, DoubleLockFail)
 {
     char c = 'a';
     int toChild[2];
@@ -41,7 +61,7 @@ TEST(TestPidFile, DoubleLockFail)
         // Child - lock pid file and wait for read
         (void) close(toChild[1]);
         (void) close(toParent[0]);
-        PidFile file("test.pid");
+        PidFile file(m_pidFile);
         ASSERT_TRUE(file.valid());
         ASSERT_EQ(1, write(toParent[1], &c, 1));
         ASSERT_EQ(1, read(toChild[0], &c, 1));
@@ -53,7 +73,7 @@ TEST(TestPidFile, DoubleLockFail)
     (void) close(toChild[0]);
     (void) close(toParent[1]);
     ASSERT_EQ(1, read(toParent[0], &c, 1));
-    PidFile file2("test.pid");
+    PidFile file2(m_pidFile);
     EXPECT_FALSE(file2.valid());
     EXPECT_EQ(1, write(toChild[1], &c, 1));
     (void) close(toParent[0]);
