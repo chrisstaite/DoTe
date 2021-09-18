@@ -61,6 +61,12 @@ SslConnection::SslConnection(std::shared_ptr<Context> context) :
 
 SslConnection::~SslConnection() noexcept
 {
+    if (m_context)
+    {
+        // Probably not required because we free the m_ssl,
+        // but it's better safe than sorry...
+        m_context->setSslConnection(m_ssl, nullptr);
+    }
     if (m_ssl)
     {
         SSL_free(m_ssl);

@@ -1,9 +1,22 @@
+
 #include "openssl/certificate_utilities.h"
 
 namespace dote {
 namespace openssl {
 
 namespace {
+
+#if OPENSSL_VERSION_NUMBER >= 0x010100000
+X509* certFromStore(X509_STORE_CTX* store)
+{
+    return (store == nullptr) ? nullptr : X509_STORE_CTX_get0_cert(store);
+}
+#else
+X509* certFromStore(X509_STORE_CTX* store)
+{
+    return (store == nullptr) ? nullptr : store->cert;
+}
+#endif
 
 std::string toString(ASN1_STRING* string)
 {
@@ -29,6 +42,10 @@ CertificateUtilities::CertificateUtilities(X509* certificate) :
     m_certificate(certificate)
 { }
 
+CertificateUtilities::CertificateUtilities(X509_STORE_CTX* store) :
+    m_certificate(certFromStore(store))
+{ }
+
 std::vector<unsigned char> CertificateUtilities::getCertificateHash(HashFunction function)
 {
     std::vector<unsigned char> hash;
@@ -50,6 +67,11 @@ std::vector<unsigned char> CertificateUtilities::getCertificateHash(HashFunction
         }
     }
     return hash;
+}
+
+std::vector<unsigned char> CertificateUtilities::getHash()
+{
+    return getCertificateHash(&X509_digest);
 }
 
 std::vector<unsigned char> CertificateUtilities::getPublicKeyHash()
@@ -79,6 +101,11 @@ std::string CertificateUtilities::getCommonName()
         }
     }
     return result;
+}
+
+X509* CertificateUtilities::certificate()
+{
+    return m_certificate;
 }
 
 }  // namespace openssl

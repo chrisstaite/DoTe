@@ -9,6 +9,8 @@
 namespace dote {
 namespace openssl {
 
+class CertificateUtilities;
+
 class SpkiVerifier
 {
   public:
@@ -39,7 +41,7 @@ class SpkiVerifier
     /// \param certificate  The certificate to verify against the hash
     ///
     /// \return  True if the SHA-256 hash of the public key matches the configured hash
-    bool verifyHash(X509* certificate) const;
+    bool verifyHash(CertificateUtilities& certificate) const;
 
     /// The forwarder configuration to validate against
     ConfigParser::Forwarder& m_config;
