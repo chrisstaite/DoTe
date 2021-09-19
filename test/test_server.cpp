@@ -10,6 +10,7 @@
 namespace dote {
 
 using ::testing::_;
+using ::testing::Invoke;
 using ::testing::DoAll;
 using ::testing::SaveArg;
 
@@ -20,6 +21,8 @@ class TestServer : public ::testing::Test
         m_loop(std::make_shared<MockLoop>()),
         m_forwarders(std::make_shared<MockForwarders>()),
         m_server(m_loop, m_forwarders),
+        m_callback(),
+        m_handle(-1),
         m_config()
     {
         m_config.address = parse4("127.0.0.1", htons(2000));
@@ -36,7 +39,11 @@ class TestServer : public ::testing::Test
     void configureCallback()
     {
         EXPECT_CALL(*m_loop, registerRead(_, _, _))
-            .WillOnce(DoAll(SaveArg<0>(&m_handle), SaveArg<1>(&m_callback)));
+            .WillOnce(Invoke([this](int handle, ILoop::Callback callback, time_t timeout) {
+                m_handle = handle;
+                m_callback = std::move(callback);
+                return true;
+            }));
         ASSERT_TRUE(m_server.addServer(m_config));
         ASSERT_TRUE(m_callback);
         EXPECT_CALL(*m_loop, removeRead(m_handle))

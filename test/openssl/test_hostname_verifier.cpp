@@ -88,6 +88,8 @@ void TestHostnameVerifier::addSanHostname(const std::string &hostname)
             m_certificate, NID_subject_alt_name, sanNames, critical,
             X509V3_ADD_REPLACE
         ));
+
+        sk_GENERAL_NAME_pop_free(sanNames, GENERAL_NAME_free);
     }
 }
 
@@ -101,6 +103,7 @@ void TestHostnameVerifier::setCommonName(const std::string &hostname)
         hostname.size(), -1, 0
     ));
     X509_set_subject_name(m_certificate, subjectName);
+    X509_NAME_free(subjectName);
 }
 
 TEST_F(TestHostnameVerifier, MatchSanNoName)

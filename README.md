@@ -1,4 +1,4 @@
-[![Build Status](https://app.travis-ci.com/chrisstaite/DoTe.svg?branch=master)](https://app.travis-ci.com/chrisstaite/DoTe)
+[![CMake](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml/badge.svg)](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml)
 
 DoTe
 ====
