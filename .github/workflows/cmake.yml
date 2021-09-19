@@ -22,7 +22,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build_linux -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build_linux --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build_linux --config ${{env.BUILD_TYPE}} -j 4
 
     - name: Test
       run: ctest --test-dir ${{github.workspace}}/build_linux -C ${{env.BUILD_TYPE}} --output-on-failure
@@ -73,7 +73,7 @@ jobs:
       run: sudo chroot ${{runner.temp}}/mips_chroot /bin/sh -c "cd /workdir/build_mips && cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} /workdir"
 
     - name: Build
-      run: sudo chroot ${{runner.temp}}/mips_chroot cmake --build /workdir/build_mips --config ${{env.BUILD_TYPE}}
+      run: sudo chroot ${{runner.temp}}/mips_chroot cmake --build /workdir/build_mips --config ${{env.BUILD_TYPE}} -- -j 4
 
     - name: Test
       run: sudo chroot ${{runner.temp}}/mips_chroot ctest --test-dir /workdir/build_mips -C ${{env.BUILD_TYPE}} --output-on-failure
@@ -101,7 +101,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build_mac -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build_mac --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build_mac --config ${{env.BUILD_TYPE}} -j 4
 
     - name: Test
       run: ctest --test-dir ${{github.workspace}}/build_mac -C ${{env.BUILD_TYPE}} --output-on-failure
