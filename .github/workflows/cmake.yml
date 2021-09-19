@@ -5,6 +5,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  release:
+    types: [ created ]
 
 env:
   BUILD_TYPE: Release
@@ -38,8 +40,16 @@ jobs:
 
     - name: Install cross-compile dependencies
       run: sudo apt-get install debootstrap qemu-user-static binfmt-support sbuild schroot
-      
+
+    - name: Cache chroot
+      id: cache-chroot
+      uses: actions/cache@v2
+      with:
+        path: ${{runner.temp}}/mips_chroot
+        key: mips-chroot
+
     - name: Make mips chroot
+      if: steps.cache-chroot.outputs.cache-hit != 'true'
       run: |
         mkdir ${{runner.temp}}/mips_chroot
         sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential --arch=mips stretch ${{runner.temp}}/mips_chroot http://ftp.us.debian.org/debian/
@@ -48,6 +58,7 @@ jobs:
         sudo sbuild-createchroot --arch=mips --foreign --setup-only stretch ${{runner.temp}}/mips_chroot http://ftp.us.debian.org/debian/
 
     - name: Install chroot dependencies
+      if: steps.cache-chroot.outputs.cache-hit != 'true'
       run: |
         sudo chroot ${{runner.temp}}/mips_chroot apt-get update
         sudo chroot ${{runner.temp}}/mips_chroot apt-get --allow-unauthenticated install -qq -y build-essential libssl-dev cmake g++
@@ -99,3 +110,72 @@ jobs:
       with:
         name: macOS build
         path: ${{github.workspace}}/build_mac/dote
+
+  get_release:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'created'
+    outputs:
+      upload_url: ${{ steps.get_release.outputs.upload_url }}
+    steps:
+    - name: Get release
+      id: get_release
+      uses: bruceadams/get-release@v1.2.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload_linux:
+    needs: [ get_release, build_linux ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+      id: download
+      with:
+        name: Linux build
+
+    - name: Upload release binary
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.get_release.outputs.upload_url }}
+        asset_path: ${{ steps.download.outputs.download-path }}
+        asset_name: dote_linux
+        asset_content_type: application/octet-stream
+
+  upload_linux_mips:
+    needs: [ get_release, build_linux_mips ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+      id: download
+      with:
+        name: Linux MIPS build
+
+    - name: Upload release binary
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.get_release.outputs.upload_url }}
+        asset_path: ${{ steps.download.outputs.download-path }}
+        asset_name: dote_mips
+        asset_content_type: application/octet-stream
+
+  upload_mac:
+    needs: [ get_release, build_mac ]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+      id: download
+      with:
+        name: macOS build
+
+    - name: Upload release binary
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.get_release.outputs.upload_url }}
+        asset_path: ${{ steps.download.outputs.download-path }}
+        asset_name: dote_macos
+        asset_content_type: application/octet-stream
