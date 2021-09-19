@@ -41,13 +41,6 @@ jobs:
     - name: Install cross-compile dependencies
       run: sudo apt-get install debootstrap qemu-user-static binfmt-support sbuild schroot
 
-    - name: Cache chroot
-      id: cache-chroot
-      uses: actions/cache@v2
-      with:
-        path: ${{runner.temp}}/mips_chroot
-        key: mips-chroot
-
     - name: Make mips chroot
       if: steps.cache-chroot.outputs.cache-hit != 'true'
       run: |
