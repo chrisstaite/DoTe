@@ -7,32 +7,95 @@ on:
     branches: [ master ]
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  build_linux:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build_linux -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build_linux --config ${{env.BUILD_TYPE}}
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}}
+      run: ctest --test-dir ${{github.workspace}}/build_linux -C ${{env.BUILD_TYPE}} --output-on-failure
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Linux build
+        path: ${{github.workspace}}/build_linux/dote
+    
+  build_linux_mips:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install cross-compile dependencies
+      run: sudo apt-get install debootstrap qemu-user-static binfmt-support sbuild schroot
       
+    - name: Make mips chroot
+      run: |
+        mkdir ${{runner.temp}}/mips_chroot
+        sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential --arch=mips stretch ${{runner.temp}}/mips_chroot http://ftp.us.debian.org/debian/
+        sudo cp /usr/bin/qemu-mips-static ${{runner.temp}}/mips_chroot/usr/bin/
+        sudo chroot ${{runner.temp}}/mips_chroot ./debootstrap/debootstrap --second-stage
+        sudo sbuild-createchroot --arch=mips --foreign --setup-only stretch ${{runner.temp}}/mips_chroot http://ftp.us.debian.org/debian/
+
+    - name: Install chroot dependencies
+      run: |
+        sudo chroot ${{runner.temp}}/mips_chroot apt-get update
+        sudo chroot ${{runner.temp}}/mips_chroot apt-get --allow-unauthenticated install -qq -y build-essential libssl-dev cmake g++
+
+    - name: Copy source to chroot
+      run: |
+        sudo mkdir ${{runner.temp}}/mips_chroot/workdir
+        sudo cp -r ${{github.workspace}}/* ${{runner.temp}}/mips_chroot/workdir
+        sudo mkdir ${{runner.temp}}/mips_chroot/workdir/build_mips
+
+    - name: Configure CMake
+      run: sudo chroot ${{runner.temp}}/mips_chroot cmake -B /workdir/build_mips -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} /workdir
+
+    - name: Build
+      run: sudo chroot ${{runner.temp}}/mips_chroot cmake --build /workdir/build_mips --config ${{env.BUILD_TYPE}} /workdir
+
+    - name: Test
+      run: sudo chroot ${{runner.temp}}/mips_chroot ctest --test-dir /workdir/build_mips -C ${{env.BUILD_TYPE}} --output-on-failure
+
+    - name: Copy build out of chroot
+      run: |
+        sudo cp -r ${{runner.temp}}/mips_chroot/workdir/build_mips ${{github.workspace}}
+        sudo chown -R $(whoami) ${{github.workspace}}/build_mips
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Linux MIPS build
+        path: ${{github.workspace}}/build_mips/dote
+
+  build_mac:
+    runs-on: macos-latest
+
+    env:
+      OPENSSL_ROOT_DIR: /usr/local/opt/openssl/
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build_mac -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build_mac --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      run: ctest --test-dir ${{github.workspace}}/build_mac -C ${{env.BUILD_TYPE}} --output-on-failure
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: macOS build
+        path: ${{github.workspace}}/build_mac/dote
