@@ -138,7 +138,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.get_release.outputs.upload_url }}
-        asset_path: ${{ steps.download.outputs.download-path }}
+        asset_path: ${{ steps.download.outputs.download-path }}/dote
         asset_name: dote_linux
         asset_content_type: application/octet-stream
 
@@ -157,7 +157,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.get_release.outputs.upload_url }}
-        asset_path: ${{ steps.download.outputs.download-path }}
+        asset_path: ${{ steps.download.outputs.download-path }}/dote
         asset_name: dote_mips
         asset_content_type: application/octet-stream
 
@@ -176,6 +176,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.get_release.outputs.upload_url }}
-        asset_path: ${{ steps.download.outputs.download-path }}
+        asset_path: ${{ steps.download.outputs.download-path }}/dote
         asset_name: dote_macos
         asset_content_type: application/octet-stream
