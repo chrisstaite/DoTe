@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 namespace dote {
 
@@ -13,9 +14,14 @@ class TestPidFile : public ::testing::Test
 {
   public:
     TestPidFile() :
-        m_pidFile(::testing::internal::TempDir() + "pidfile-XXXXXX.pid")
+        m_pidFile(::testing::internal::TempDir() + "pidfile-XXXXXX")
+    { }
+    
+    void SetUp()
     {
-        close(mkstemp(&m_pidFile[0]));
+        int handle = mkstemp(&m_pidFile[0]);
+        ASSERT_NE(-1, handle) << "Error creating temp file " << strerror(errno);
+        (void) close(handle);
     }
 
     ~TestPidFile()
