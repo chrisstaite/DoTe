@@ -32,8 +32,16 @@ jobs:
         name: Linux build
         path: ${{github.workspace}}/build_linux/dote
     
-  build_linux_mips:
+  build_linux_cross:
     runs-on: ubuntu-18.04
+
+    strategy:
+      matrix:
+        include:
+          - architecture: mips
+            qemu: mips
+          - architecture: arm64
+            qemu: aarch64
 
     steps:
     - uses: actions/checkout@v2
@@ -41,45 +49,44 @@ jobs:
     - name: Install cross-compile dependencies
       run: sudo apt-get install debootstrap qemu-user-static binfmt-support sbuild schroot
 
-    - name: Make mips chroot
-      if: steps.cache-chroot.outputs.cache-hit != 'true'
+    - name: Make chroot
       run: |
-        mkdir ${{runner.temp}}/mips_chroot
-        sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential --arch=mips stretch ${{runner.temp}}/mips_chroot http://ftp.us.debian.org/debian/
-        sudo cp /usr/bin/qemu-mips-static ${{runner.temp}}/mips_chroot/usr/bin/
-        sudo chroot ${{runner.temp}}/mips_chroot ./debootstrap/debootstrap --second-stage
-        sudo sbuild-createchroot --arch=mips --foreign --setup-only stretch ${{runner.temp}}/mips_chroot http://ftp.us.debian.org/debian/
+        mkdir ${{runner.temp}}/chroot
+        sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential --arch=${{matrix.architecture}} stretch ${{runner.temp}}/chroot http://ftp.us.debian.org/debian/
+        sudo cp /usr/bin/qemu-${{matrix.qemu}}-static ${{runner.temp}}/chroot/usr/bin/
+        sudo chroot ${{runner.temp}}/chroot ./debootstrap/debootstrap --second-stage
+        sudo sbuild-createchroot --arch=${{matrix.architecture}} --foreign --setup-only stretch ${{runner.temp}}/chroot http://ftp.us.debian.org/debian/
 
     - name: Install chroot dependencies
       if: steps.cache-chroot.outputs.cache-hit != 'true'
       run: |
-        sudo chroot ${{runner.temp}}/mips_chroot apt-get update
-        sudo chroot ${{runner.temp}}/mips_chroot apt-get --allow-unauthenticated install -qq -y build-essential libssl-dev cmake g++
+        sudo chroot ${{runner.temp}}/chroot apt-get update
+        sudo chroot ${{runner.temp}}/chroot apt-get --allow-unauthenticated install -qq -y build-essential libssl-dev cmake g++
 
     - name: Copy source to chroot
       run: |
-        sudo mkdir ${{runner.temp}}/mips_chroot/workdir
-        sudo cp -r ${{github.workspace}}/* ${{runner.temp}}/mips_chroot/workdir
-        sudo mkdir ${{runner.temp}}/mips_chroot/workdir/build_mips
+        sudo mkdir ${{runner.temp}}/chroot/workdir
+        sudo cp -r ${{github.workspace}}/* ${{runner.temp}}/chroot/workdir
+        sudo mkdir ${{runner.temp}}/chroot/workdir/build
 
     - name: Configure CMake
-      run: sudo chroot ${{runner.temp}}/mips_chroot /bin/sh -c "cd /workdir/build_mips && cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} /workdir"
+      run: sudo chroot ${{runner.temp}}/chroot /bin/sh -c "cd /workdir/build && cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} /workdir"
 
     - name: Build
-      run: sudo chroot ${{runner.temp}}/mips_chroot cmake --build /workdir/build_mips --config ${{env.BUILD_TYPE}} -- -j 4
+      run: sudo chroot ${{runner.temp}}/chroot cmake --build /workdir/build --config ${{env.BUILD_TYPE}} -- -j 4
 
     - name: Test
-      run: sudo chroot ${{runner.temp}}/mips_chroot ctest --test-dir /workdir/build_mips -C ${{env.BUILD_TYPE}} --output-on-failure
+      run: sudo chroot ${{runner.temp}}/chroot ctest --test-dir /workdir/build -C ${{env.BUILD_TYPE}} --output-on-failure
 
     - name: Copy build out of chroot
       run: |
-        sudo cp -r ${{runner.temp}}/mips_chroot/workdir/build_mips ${{github.workspace}}
-        sudo chown -R $(whoami) ${{github.workspace}}/build_mips
+        sudo cp -r ${{runner.temp}}/chroot/workdir/build ${{github.workspace}}
+        sudo chown -R $(whoami) ${{github.workspace}}/build
 
     - uses: actions/upload-artifact@v2
       with:
-        name: Linux MIPS build
-        path: ${{github.workspace}}/build_mips/dote
+        name: Linux ${{matrix.architecture}} build
+        path: ${{github.workspace}}/build/dote
 
   build_mac:
     runs-on: macos-latest
@@ -135,14 +142,21 @@ jobs:
         asset_name: dote_linux
         asset_content_type: application/octet-stream
 
-  upload_linux_mips:
-    needs: [ get_release, build_linux_mips ]
+  upload_linux_cross:
+    needs: [ get_release, build_linux_cross ]
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        architecture:
+          - mips
+          - arm64
+
     steps:
     - uses: actions/download-artifact@v2
       id: download
       with:
-        name: Linux MIPS build
+        name: Linux ${{matrix.architecture}} build
 
     - name: Upload release binary
       uses: actions/upload-release-asset@v1.0.2
@@ -151,7 +165,7 @@ jobs:
       with:
         upload_url: ${{ needs.get_release.outputs.upload_url }}
         asset_path: ${{ steps.download.outputs.download-path }}/dote
-        asset_name: dote_mips
+        asset_name: dote_${{matrix.architecture}}
         asset_content_type: application/octet-stream
 
   upload_mac:
