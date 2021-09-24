@@ -8,6 +8,7 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -91,6 +92,9 @@ Socket::Socket(int handle) :
         {
             close();
         }
+        // If this doesn't work, it's no big deal
+        int val = 1;
+        (void) setsockopt(m_handle, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
     }
 }
 

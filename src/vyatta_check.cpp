@@ -28,7 +28,6 @@ VyattaCheck::VyattaCheck(const ConfigParser& parser) :
         auto flags = IN_MOVED_TO | IN_CREATE | IN_CLOSE_WRITE;
         if (inotify_add_watch(m_fd, CONFIG_LOCATION, flags) == -1)
         {
-            Log::err << "Unable to find configuration directory to watch";
             close(m_fd);
             m_fd = -1;
         }
@@ -77,9 +76,9 @@ void VyattaCheck::configure(Dote& dote)
         );
         Log::info << "Registered listener for configuration changes";
     }
-    else
+    else if (m_fd >= 0)
     {
-        Log::err << "Dote instance didn't have a looper";
+        Log::err << "DoTe instance didn't have a looper";
     }
 }
 

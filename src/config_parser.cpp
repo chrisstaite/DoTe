@@ -13,7 +13,7 @@ namespace dote {
 namespace {
 
 /// The default cipher suite to use
-constexpr char DEFAULT_CIPHERS[] = "EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA256:EECDH+ECDSA+SHA384:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA384:EDH+aRSA+AESGCM:EDH+aRSA+SHA256:EDH+aRSA:EECDH:!aNULL:!eNULL:!MEDIUM:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!RC4:!SEED";
+constexpr char DEFAULT_CIPHERS[] = "DEFAULT";
 
 /// The default maximum open connections at a time
 constexpr std::size_t DEFAULT_MAX_CONNECTIONS = 5u;

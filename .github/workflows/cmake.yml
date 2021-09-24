@@ -58,7 +58,6 @@ jobs:
         sudo sbuild-createchroot --arch=${{matrix.architecture}} --foreign --setup-only stretch ${{runner.temp}}/chroot http://ftp.us.debian.org/debian/
 
     - name: Install chroot dependencies
-      if: steps.cache-chroot.outputs.cache-hit != 'true'
       run: |
         sudo chroot ${{runner.temp}}/chroot apt-get update
         sudo chroot ${{runner.temp}}/chroot apt-get --allow-unauthenticated install -qq -y build-essential libssl-dev cmake g++
