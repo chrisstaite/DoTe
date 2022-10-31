@@ -45,6 +45,7 @@ ForwarderConnection::ForwarderConnection(std::shared_ptr<ILoop> loop,
         }
         else
         {
+            m_config->setBad(m_forwarder);
             m_state = CLOSED;
         }
     }
