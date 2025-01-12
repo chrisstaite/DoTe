@@ -1,4 +1,4 @@
-[![CMake](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml/badge.svg)](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml)
+[![CMake](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml)
 
 DoTe
 ====
@@ -24,7 +24,7 @@ You can simply download the latest release to /config, add a start u
 script and then run it.
 
 ~~~~~
-curl -L -o /config/dote_mips https://github.com/chrisstaite/DoTe/releases/latest/download/dote_mips
+curl -L -o /config/dote_mips https://github.com/chrisstaite/DoTe/releases/download/v0.20.0/dote_mips
 mkdir -p /config/scripts/post-config.d/
 cat >/config/scripts/post-config.d/10-dote <<EOF
 #!/bin/sh
