@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
 bool operator==(const sockaddr_storage& a,
                 const sockaddr_storage& b)

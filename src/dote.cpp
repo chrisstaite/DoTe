@@ -11,6 +11,7 @@
 
 #include <openssl/x509.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 namespace dote {
 

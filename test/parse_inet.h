@@ -3,6 +3,7 @@
 
 #include <string>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 
 namespace dote {
 
