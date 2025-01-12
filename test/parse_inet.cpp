@@ -2,6 +2,7 @@
 #include "parse_inet.h"
 
 #include <cstring>
+#include <netinet/in.h>
 
 namespace dote {
 

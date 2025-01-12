@@ -6,6 +6,7 @@
 #include "socket.h"
 
 #include <memory>
+#include <netinet/in.h>
 
 namespace dote {
 

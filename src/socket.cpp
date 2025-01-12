@@ -15,6 +15,8 @@
 #include <cerrno>
 #include <cstring>
 
+#include <netinet/in.h>
+
 namespace dote {
 
 namespace {
@@ -189,12 +191,16 @@ bool Socket::enablePacketInfo()
     int enable = 1;
     if (m_domain == PF_INET)
     {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__)
         proto = IPPROTO_IP;
 #else
         proto = SOL_IP;
 #endif
+#ifdef IP_RECVDSTADDR
+        flag = IP_RECVDSTADDR;
+#else
         flag = IP_PKTINFO;
+#endif
     }
     else if (m_domain == PF_INET6)
     {

@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 namespace dote {
 

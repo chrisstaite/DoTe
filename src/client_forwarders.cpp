@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <functional>
 #include <cstring>
+#include <netinet/in.h>
 
 namespace dote {
 

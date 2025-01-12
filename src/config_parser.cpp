@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
+#include <netinet/in.h>
 
 namespace dote {
 
