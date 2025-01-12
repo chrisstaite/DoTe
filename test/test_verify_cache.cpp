@@ -2,6 +2,7 @@
 #include "verify_cache.h"
 
 #include <openssl/x509.h>
+#include <openssl/ec.h>
 #include <gmock/gmock.h>
 
 #include <memory>
@@ -51,6 +52,15 @@ std::unique_ptr<X509, decltype(X509_free)*> TestVerifyCache::createCertificate()
     std::unique_ptr<X509, decltype(X509_free)*> certificate(
         X509_new(), &X509_free
     );
+    // OpenSSLv3 requires the certificate to be valid to get the hash.
+    #if OPENSSL_VERSION_MAJOR >= 3
+    std::unique_ptr<EVP_PKEY, decltype(EVP_PKEY_free)*> pkey(
+        EVP_EC_gen("secp521r1"), &EVP_PKEY_free
+    );
+    ASN1_INTEGER_set(X509_get_serialNumber(certificate.get()), 1);
+    X509_set_pubkey(certificate.get(), pkey.get());
+    X509_sign(certificate.get(), pkey.get(), EVP_sha256());
+    #endif
     return certificate;
 }
 

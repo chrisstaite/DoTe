@@ -7,6 +7,7 @@
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
+#include <openssl/opensslv.h>
 
 namespace dote {
 namespace openssl {
@@ -89,7 +90,11 @@ Context::~Context()
     {
         SSL_CTX_free(m_context);
         
+        #if OPENSSL_VERSION_MAJOR >= 3
+        EVP_default_properties_enable_fips(nullptr, 0);
+        #else
         FIPS_mode_set(0);
+        #endif
         ENGINE_cleanup();
         CONF_modules_unload(1);
         EVP_cleanup();

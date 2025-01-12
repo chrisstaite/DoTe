@@ -16,24 +16,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build_linux -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build_linux --config ${{env.BUILD_TYPE}} -j 4
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j 4
 
     - name: Test
-      run: ctest --test-dir ${{github.workspace}}/build_linux -C ${{env.BUILD_TYPE}} --output-on-failure
+      run: ctest --test-dir ${{github.workspace}}/build -C ${{env.BUILD_TYPE}} --output-on-failure
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: Linux build
-        path: ${{github.workspace}}/build_linux/dote
+        path: ${{github.workspace}}/build/dote
     
+    - name: Rename for upload
+      run: mv ${{github.workspace}}/build/dote ${{github.workspace}}/build/dote_linux
+  
+    - name: Upload release binary
+      uses: softprops/action-gh-release@v2
+      if: github.event_name == 'release' && github.event.action == 'created'
+      with:
+        files: ${{github.workspace}}/build/dote_linux
+  
   build_linux_cross:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -44,7 +53,7 @@ jobs:
             qemu: aarch64
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install cross-compile dependencies
       run: sudo apt-get install debootstrap qemu-user-static binfmt-support sbuild schroot
@@ -52,10 +61,10 @@ jobs:
     - name: Make chroot
       run: |
         mkdir ${{runner.temp}}/chroot
-        sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential --arch=${{matrix.architecture}} stretch ${{runner.temp}}/chroot http://ftp.us.debian.org/debian/
+        sudo debootstrap --foreign --no-check-gpg --include=fakeroot,build-essential --arch=${{matrix.architecture}} buster ${{runner.temp}}/chroot https://archive.debian.org/debian/
         sudo cp /usr/bin/qemu-${{matrix.qemu}}-static ${{runner.temp}}/chroot/usr/bin/
         sudo chroot ${{runner.temp}}/chroot ./debootstrap/debootstrap --second-stage
-        sudo sbuild-createchroot --arch=${{matrix.architecture}} --foreign --setup-only stretch ${{runner.temp}}/chroot http://ftp.us.debian.org/debian/
+        sudo sbuild-createchroot --arch=${{matrix.architecture}} --foreign --setup-only buster ${{runner.temp}}/chroot https://archive.debian.org/debian/
 
     - name: Install chroot dependencies
       run: |
@@ -82,10 +91,19 @@ jobs:
         sudo cp -r ${{runner.temp}}/chroot/workdir/build ${{github.workspace}}
         sudo chown -R $(whoami) ${{github.workspace}}/build
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: Linux ${{matrix.architecture}} build
         path: ${{github.workspace}}/build/dote
+
+    - name: Rename for upload
+      run: mv ${{github.workspace}}/build/dote ${{github.workspace}}/build/dote_${{matrix.architecture}}
+
+    - name: Upload release binary
+      uses: softprops/action-gh-release@v2
+      if: github.event_name == 'release' && github.event.action == 'created'
+      with:
+        files: ${{github.workspace}}/build/dote_${{matrix.architecture}}
 
   build_mac:
     runs-on: macos-latest
@@ -94,7 +112,7 @@ jobs:
       OPENSSL_ROOT_DIR: /usr/local/opt/openssl/
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build_mac -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
@@ -105,83 +123,16 @@ jobs:
     - name: Test
       run: ctest --test-dir ${{github.workspace}}/build_mac -C ${{env.BUILD_TYPE}} --output-on-failure
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: macOS build
         path: ${{github.workspace}}/build_mac/dote
 
-  get_release:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'created'
-    outputs:
-      upload_url: ${{ steps.get_release.outputs.upload_url }}
-    steps:
-    - name: Get release
-      id: get_release
-      uses: bruceadams/get-release@v1.2.3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  upload_linux:
-    needs: [ get_release, build_linux ]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v2
-      id: download
-      with:
-        name: Linux build
+    - name: Rename for upload
+      run: mv ${{github.workspace}}/build_mac/dote ${{github.workspace}}/build_mac/dote_mac
 
     - name: Upload release binary
-      uses: actions/upload-release-asset@v1.0.2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
+      if: github.event_name == 'release' && github.event.action == 'created'
       with:
-        upload_url: ${{ needs.get_release.outputs.upload_url }}
-        asset_path: ${{ steps.download.outputs.download-path }}/dote
-        asset_name: dote_linux
-        asset_content_type: application/octet-stream
-
-  upload_linux_cross:
-    needs: [ get_release, build_linux_cross ]
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        architecture:
-          - mips
-          - arm64
-
-    steps:
-    - uses: actions/download-artifact@v2
-      id: download
-      with:
-        name: Linux ${{matrix.architecture}} build
-
-    - name: Upload release binary
-      uses: actions/upload-release-asset@v1.0.2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.get_release.outputs.upload_url }}
-        asset_path: ${{ steps.download.outputs.download-path }}/dote
-        asset_name: dote_${{matrix.architecture}}
-        asset_content_type: application/octet-stream
-
-  upload_mac:
-    needs: [ get_release, build_mac ]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v2
-      id: download
-      with:
-        name: macOS build
-
-    - name: Upload release binary
-      uses: actions/upload-release-asset@v1.0.2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.get_release.outputs.upload_url }}
-        asset_path: ${{ steps.download.outputs.download-path }}/dote
-        asset_name: dote_macos
-        asset_content_type: application/octet-stream
+        files: ${{github.workspace}}/build_mac/dote_mac
