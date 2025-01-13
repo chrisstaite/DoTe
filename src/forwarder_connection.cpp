@@ -110,7 +110,7 @@ void ForwarderConnection::connect(int handle)
                     m_timeout
                 );
             }
-            m_write.reset();
+            m_read.reset();
             break;
         case openssl::SslConnection::Result::SUCCESS:
             // Remove the handlers to add the running ones.
