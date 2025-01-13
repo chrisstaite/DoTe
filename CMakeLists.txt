@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.9)
 
 project(DoTe CXX)
 
@@ -130,13 +130,24 @@ else()
 endif()
 target_link_libraries(dote_static ${OPENSSL_LIBRARIES} dl)
 
-# Strip release
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE
-    "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
-
 # Set up the binary application
 add_executable(dote ${BinarySources})
 target_link_libraries(dote dote_static)
+
+# Strip release
+add_custom_command(
+  TARGET dote POST_BUILD
+  DEPENDS dote
+  COMMAND $<$<CONFIG:release>:${CMAKE_STRIP}>
+  ARGS $<TARGET_FILE:dote>
+)
+
+# Enable LTO
+include(CheckIPOSupported)
+check_ipo_supported(RESULT result)
+if (result)
+    set_property(TARGET dote PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 # Import Google test and GoogleMock
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GMock.cmake)
