@@ -2,6 +2,7 @@
 #pragma once
 
 #include "config_parser.h"
+#include "i_loop.h"
 
 namespace dote {
 
@@ -41,6 +42,8 @@ class VyattaCheck
     
     /// A handle to the inotify watch on the configuration file
     int m_fd;
+    /// The read registration for m_fd.
+    ILoop::Registration m_read;
     /// The main DoTe instance to configure on configuration changes
     Dote* m_dote;
     /// The base configuration to augment

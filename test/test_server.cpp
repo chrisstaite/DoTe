@@ -43,7 +43,7 @@ class TestServer : public ::testing::Test
             .WillOnce(Invoke([this](int handle, ILoop::Callback callback, time_t timeout) {
                 m_handle = handle;
                 m_callback = std::move(callback);
-                return true;
+                return ILoop::Registration(m_loop.get(), m_handle, ILoop::Read);
             }));
         ASSERT_TRUE(m_server.addServer(m_config));
         ASSERT_TRUE(m_callback);

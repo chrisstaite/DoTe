@@ -36,8 +36,7 @@ constexpr int ALLOWED_ERRORS[] = {
 
 Context::Context(const std::string& ciphers) :
     m_context(nullptr),
-    m_session(nullptr),
-    m_chainVerifier()
+    m_session(nullptr)
 {
     // Flag to track if we've tried initialising the OpenSSL
     // library yet because we shouldn't keep trying

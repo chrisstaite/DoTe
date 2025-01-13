@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "i_loop.h"
+
 #include <memory>
 
 namespace dote {
@@ -50,6 +52,12 @@ class IpLookup
     std::shared_ptr<Loop> m_loop;
     /// The socket that the connection if performed on
     std::shared_ptr<Socket> m_socket;
+    /// The current read registration for m_socket.
+    ILoop::Registration m_read;
+    /// The current write registration for m_socket.
+    ILoop::Registration m_write;
+    /// The current exception registration for m_socket.
+    ILoop::Registration m_exception;
     /// The connection that was made to the IP address
     std::shared_ptr<openssl::ISslConnection> m_connection;
     /// The time at which the lookup will be considered failed

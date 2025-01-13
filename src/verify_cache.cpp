@@ -9,9 +9,7 @@ namespace dote {
 
 VerifyCache::VerifyCache(openssl::Context::Verifier verifier, int timeout) :
     m_verifier(verifier),
-    m_timeout(timeout),
-    m_cache(),
-    m_expiry()
+    m_timeout(timeout)
 { }
 
 int VerifyCache::forwardVerify(X509_STORE_CTX* context)

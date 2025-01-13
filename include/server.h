@@ -2,13 +2,13 @@
 #pragma once
 
 #include "config_parser.h"
+#include "i_loop.h"
 
 #include <vector>
 #include <memory>
 
 namespace dote {
 
-class ILoop;
 class Socket;
 class IForwarders;
 
@@ -46,8 +46,9 @@ class Server
     std::shared_ptr<ILoop> m_loop;
     /// The available forwarders
     std::shared_ptr<IForwarders> m_forwarders;
-    /// The sockets that we are recieving from
-    std::vector<std::shared_ptr<Socket>> m_serverSockets;
+    using SocketAndRegistration = std::pair<std::shared_ptr<Socket>, ILoop::Registration>;
+    /// The sockets that we are recieving from and their read registrations.
+    std::vector<SocketAndRegistration> m_serverSockets;
 };
 
 }  // namespace dote

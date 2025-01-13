@@ -44,8 +44,7 @@ T certificateOperation(T(CertificateUtilities::*utility)(), SSL* ssl)
 
 SslConnection::SslConnection(std::shared_ptr<Context> context) :
     m_context(std::move(context)),
-    m_ssl(nullptr),
-    m_verifier()
+    m_ssl(nullptr)
 {
     if (m_context)
     {

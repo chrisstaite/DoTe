@@ -76,17 +76,10 @@ using namespace std::placeholders;
 Server::Server(std::shared_ptr<ILoop> loop,
                std::shared_ptr<IForwarders> forwarders) :
     m_loop(std::move(loop)),
-    m_forwarders(std::move(forwarders)),
-    m_serverSockets()
+    m_forwarders(std::move(forwarders))
 { }
 
-Server::~Server()
-{
-    for (auto& socket : m_serverSockets)
-    {
-        m_loop->removeRead(socket->get());
-    }
-}
+Server::~Server() = default;
 
 bool Server::addServer(const ConfigParser::Server& config)
 {
@@ -99,12 +92,12 @@ bool Server::addServer(const ConfigParser::Server& config)
     {
         Log::warn << "Unable to get recieve address for packets";
     }
-    m_serverSockets.emplace_back(std::move(serverSocket));
-    m_loop->registerRead(
-        m_serverSockets.back()->get(),
+    auto registration = m_loop->registerRead(
+        serverSocket->get(),
         std::bind(&Server::handleDnsRequest, this, _1),
         0
     );
+    m_serverSockets.emplace_back(std::move(serverSocket), std::move(registration));
     return true;
 }
 
@@ -112,11 +105,11 @@ void Server::handleDnsRequest(int handle)
 {
     // Get the socket for this handle
     std::shared_ptr<Socket> handleSocket;
-    for (auto& socket : m_serverSockets)
+    for (auto& socket_registration : m_serverSockets)
     {
-        if (socket->get() == handle)
+        if (socket_registration.first->get() == handle)
         {
-            handleSocket = socket;
+            handleSocket = socket_registration.first;
             break;
         }
     }

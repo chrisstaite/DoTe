@@ -48,12 +48,12 @@ void Loop::popluateFds(std::vector<pollfd>& fds,
                        const std::map<int, T>& functions,
                        short event)
 {
-    for (auto& read : functions)
+    for (auto& handle_function : functions)
     {
         bool found = false;
         for (auto& fd : fds)
         {
-            if (fd.fd == read.first)
+            if (fd.fd == handle_function.first)
             {
                 fd.events |= event;
                 found = true;
@@ -61,7 +61,7 @@ void Loop::popluateFds(std::vector<pollfd>& fds,
         }
         if (!found)
         {
-            fds.emplace_back(pollfd { read.first, event, 0 });
+            fds.emplace_back(pollfd { handle_function.first, event, 0 });
         }
     }
 }
@@ -101,38 +101,38 @@ void Loop::callCallback(
     }
 }
 
-bool Loop::registerRead(int handle, Callback callback, time_t timeout)
+ILoop::Registration Loop::registerRead(int handle, Callback callback, time_t timeout)
 {
     if (m_readFunctions.count(handle))
     {
-        return false;
+        return {};
     }
 
     m_readFunctions.insert({ handle, std::make_pair(std::move(callback), timeout) });
-    return true;
+    return Registration(this, handle, Type::Read);
 }
 
-bool Loop::registerWrite(int handle, Callback callback, time_t timeout)
+ILoop::Registration Loop::registerWrite(int handle, Callback callback, time_t timeout)
 {
     if (m_writeFunctions.count(handle))
     {
-        return false;
+        return {};
     }
 
     m_writeFunctions.insert({ handle, std::make_pair(std::move(callback), timeout) });
-    return true;
+    return Registration(this, handle, Type::Write);
 }
 
-bool Loop::registerException(int handle, Callback callback)
+ILoop::Registration Loop::registerException(int handle, Callback callback)
 {
     if (m_exceptFunctions.count(handle))
     {
-        return false;
+        return {};
     }
 
     // Nothing to register for, poll always returns exceptions
     m_exceptFunctions.insert({ handle, std::move(callback) });
-    return true;
+    return Registration(this, handle, Type::Exception);
 }
 
 void Loop::removeRead(int handle)
