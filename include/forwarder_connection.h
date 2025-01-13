@@ -2,6 +2,7 @@
 #pragma once
 
 #include "config_parser.h"
+#include "i_loop.h"
 #include "openssl/ssl_connection.h"
 
 #include <memory>
@@ -12,7 +13,6 @@
 
 namespace dote {
 
-class ILoop;
 class IForwarderConfig;
 class Socket;
 
@@ -93,8 +93,6 @@ class ForwarderConnection
     void configureVerifier();
 
     /// \brief  Perform the initial connection
-    ///
-    /// \param handle  The socket that is available to connect on
     void connect(int handle);
 
     /// \brief  Nicely shutdown the connection
@@ -136,6 +134,12 @@ class ForwarderConnection
     State m_state;
     /// The established connection to the forwarder
     std::shared_ptr<Socket> m_socket;
+    /// The current read registration for m_socket.
+    ILoop::Registration m_read;
+    /// The current write registration for m_socket.
+    ILoop::Registration m_write;
+    /// The current exception registration for m_socket.
+    ILoop::Registration m_exception;
     /// The write buffer, the request will be a single message
     std::vector<char> m_buffer;
     /// The chosen forwarder that this is connected to

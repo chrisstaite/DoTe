@@ -23,13 +23,7 @@ constexpr std::size_t DEFAULT_MAX_CONNECTIONS = 5u;
 
 ConfigParser::ConfigParser() :
     m_valid(true),
-    m_partialForwarder(),
-    m_forwarders(),
-    m_servers(),
-    m_ipLookup(),
-    m_ciphers(),
     m_maxConnections(DEFAULT_MAX_CONNECTIONS),
-    m_pidFile(),
     m_daemonise(false),
     m_timeout(5u)
 {

@@ -94,9 +94,7 @@ ClientForwarders::ClientForwarders(std::shared_ptr<ILoop> loop,
     m_loop(std::move(loop)),
     m_config(std::move(config)),
     m_ssl(std::move(ssl)),
-    m_maxConnections(maxConnections),
-    m_forwarders(),
-    m_queue()
+    m_maxConnections(maxConnections)
 { }
 
 ClientForwarders::~ClientForwarders() noexcept

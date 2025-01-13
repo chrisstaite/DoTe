@@ -11,8 +11,7 @@
 namespace dote {
 
 ForwarderConfig::ForwarderConfig() :
-    m_timeout(5),
-    m_forwarders()
+    m_timeout(5)
 { }
 
 void ForwarderConfig::clear()
@@ -50,7 +49,7 @@ std::vector<ConfigParser::Forwarder>::const_iterator ForwarderConfig::end() cons
     return m_forwarders.cend();
 }
 
-void ForwarderConfig::setBad(const ConfigParser::Forwarder &config)
+void ForwarderConfig::setBad(const ConfigParser::Forwarder& config)
 {
     // Look for the config in the forwarder list and move it to the end
     for (auto it = m_forwarders.begin(); it != m_forwarders.end(); ++it)

@@ -18,11 +18,11 @@ PidFile::PidFile(const std::string& filename) :
         m_handle = open(filename.c_str(), O_RDWR | O_CREAT, 0640);
         if (m_handle < 0)
         {
-            dote::Log::err << "Unable to open PID file";
+            Log::err << "Unable to open PID file";
         }
         else if (lockf(m_handle, F_TLOCK, 0) < 0)
         {
-            dote::Log::err << "Unable to lock PID file";
+            Log::err << "Unable to lock PID file";
             close(m_handle);
             m_handle = -1;
         }
@@ -34,7 +34,7 @@ PidFile::PidFile(const std::string& filename) :
         if (write(m_handle, contents.c_str(), contents.length()) !=
                 contents.length())
         {
-            dote::Log::err << "Unable to write the PID to the PID file";
+            Log::err << "Unable to write the PID to the PID file";
             (void) close(m_handle);
             m_handle = -1;
             (void) unlink(m_filename.c_str());

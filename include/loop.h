@@ -32,8 +32,8 @@ class Loop : public ILoop
     /// \param callback  The callback to call if it triggers
     /// \param timeout  The time at which to call exception on the handle
     ///
-    /// \return  True if the handle is not already registered and now is
-    bool registerRead(int handle, Callback callback, time_t timeout) override;
+    /// \return  A registration which is valid on success
+    Registration registerRead(int handle, Callback callback, time_t timeout) override;
 
     /// \brief   Register for write availability on a given handle
     ///
@@ -41,17 +41,18 @@ class Loop : public ILoop
     /// \param callback  The callback to call if it triggers
     /// \param timeout  The time at which to call exception on the handle
     ///
-    /// \return  True if the handle is not already registered and now is
-    bool registerWrite(int handle, Callback callback, time_t timeout) override;
+    /// \return  A registration which is valid on success
+    Registration registerWrite(int handle, Callback callback, time_t timeout) override;
 
     /// \brief  Register for exceptions on a given handle
     ///
     /// \param handle    The handle to register for exceptions
     /// \param callback  The callback to call if it triggers
     ///
-    /// \return  True if the handle is not already registered and now is
-    bool registerException(int handle, Callback callback) override;
+    /// \return  A registration which is valid on success
+    Registration registerException(int handle, Callback callback) override;
 
+  private:
     /// \brief  Remove a read handle from the loop
     ///
     /// \param handle  The handle to remove read handles for
@@ -67,7 +68,6 @@ class Loop : public ILoop
     /// \param handle  The handle to remove exception handles for
     void removeException(int handle) override;
 
-  private:
     /// \brief  Call a callback in a set of functions
     ///
     /// \param functions  The functions to lookup the callback in

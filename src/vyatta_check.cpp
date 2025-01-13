@@ -42,14 +42,6 @@ VyattaCheck::~VyattaCheck()
 {
     if (m_fd >= 0)
     {
-        if (m_dote)
-        {
-            auto loop = m_dote->looper();
-            if (loop)
-            {
-                loop->removeRead(m_fd);
-            }
-        }
         close(m_fd);
     }
 }
@@ -69,7 +61,7 @@ void VyattaCheck::configure(Dote& dote)
     if (loop && m_fd >= 0)
     {
         m_dote = &dote;
-        loop->registerRead(
+        m_read = loop->registerRead(
             m_fd,
             std::bind(&VyattaCheck::handleRead, this, std::placeholders::_1),
             0u

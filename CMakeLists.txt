@@ -48,6 +48,7 @@ set(CommonSources
     include/verify_cache.h
     src/verify_cache.cpp
     include/i_loop.h
+    src/i_loop.cpp
     include/loop.h
     src/loop.cpp
     include/server.h
