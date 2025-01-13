@@ -1,4 +1,4 @@
-[![CMake](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml/badge.svg?branch=master)](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml)
+[![CMake](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/chrisstaite/DoTe/actions/workflows/cmake.yml)
 
 DoTe
 ====
