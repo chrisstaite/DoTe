@@ -3,6 +3,8 @@ name: CMake
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
+  attestations: write
 
 on:
   push:
@@ -38,7 +40,11 @@ jobs:
     
     - name: Rename for upload
       run: mv ${{github.workspace}}/build/dote ${{github.workspace}}/build/dote_linux
-  
+
+    - uses: actions/attest-build-provenance@v2
+      with:
+        subject-path: ${{github.workspace}}/build/dote_linux
+
     - name: Upload release binary
       uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda #v2
       if: github.event_name == 'release' && github.event.action == 'created'
@@ -103,6 +109,10 @@ jobs:
     - name: Rename for upload
       run: mv ${{github.workspace}}/build/dote ${{github.workspace}}/build/dote_${{matrix.architecture}}
 
+    - uses: actions/attest-build-provenance@v2
+      with:
+        subject-path: ${{github.workspace}}/build/dote_${{matrix.architecture}}
+
     - name: Upload release binary
       uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda #v2
       if: github.event_name == 'release' && github.event.action == 'created'
@@ -134,6 +144,10 @@ jobs:
 
     - name: Rename for upload
       run: mv ${{github.workspace}}/build_mac/dote ${{github.workspace}}/build_mac/dote_mac
+
+    - uses: actions/attest-build-provenance@v2
+      with:
+        subject-path: ${{github.workspace}}/build_mac/dote_mac
 
     - name: Upload release binary
       uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda #v2
